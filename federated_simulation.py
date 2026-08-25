@@ -19,6 +19,7 @@ Usage:
 
 import sys
 import copy
+import joblib
 import numpy as np
 import pandas as pd
 import torch
@@ -592,7 +593,7 @@ def plot_training_curves(history, output_path, best_round=None):
 def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunksize=200_000,
          n_rounds=None, seq_window_size=None, seq_sort_col="time", preserve_aircraft_groups=False,
          exclude_classes=None, plot_output="training_curves.png", model_type="gru",
-         mlp_hidden_sizes=(64, 32), cnn_channels=(16, 32)):
+         mlp_hidden_sizes=(64, 32), cnn_channels=(16, 32), save_model_path=None):
     # Allow CLI overrides of module-level defaults without editing the file --
     # both were hardcoded constants before, which meant testing a different
     # window size or round count required a code edit each time.
@@ -772,6 +773,41 @@ def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunks
           f"vs. final round {N_ROUNDS} (test acc {final_acc:.4f}) -- model restored to best "
           f"checkpoint for all evaluation below.")
 
+    # Persist the best checkpoint to disk -- everything downstream (a
+    # standalone inference script, deploying to a Pi, etc.) needs the model
+    # weights AND the exact preprocessing that produced the features it was
+    # trained on. Saving the model alone without the scaler/encoder is not
+    # enough: at inference time raw features must go through the SAME
+    # StandardScaler.transform() and the label indices must map back through
+    # the SAME LabelEncoder.classes_, or predictions will be silently wrong.
+    if save_model_path:
+        model_payload = {
+            "model_state_dict": best_state if best_state is not None
+                                 else global_model.state_dict(),
+            "model_type": model_type,
+            "n_features": len(FEATURE_COLS),
+            "feature_cols": FEATURE_COLS,
+            "class_names": list(class_names),
+            "mlp_hidden_sizes": mlp_hidden_sizes,
+            "cnn_channels": cnn_channels,
+            "seq_window_size": window_size,
+            "best_round": best_round,
+            "n_rounds": N_ROUNDS,
+            "best_test_acc": best_test_acc,
+            "final_test_acc": final_acc,
+        }
+        torch.save(model_payload, save_model_path)
+        print(f"Saved best-checkpoint model -> {save_model_path}")
+
+        # Scaler/encoder saved alongside the model (same path, .pkl suffix)
+        # via joblib rather than torch.save -- these are sklearn objects,
+        # not tensors, and joblib is the standard/efficient way to persist
+        # them (handles the internal numpy arrays more compactly than
+        # pickling generically).
+        preprocess_path = save_model_path.rsplit(".", 1)[0] + "_preprocess.pkl"
+        joblib.dump({"scaler": scaler, "label_encoder": le}, preprocess_path)
+        print(f"Saved scaler + label encoder -> {preprocess_path}")
+
     plot_training_curves(history, plot_output, best_round=best_round)
 
     print("\n=== Final per-class recall (global model, pooled test set) ===")
@@ -853,6 +889,13 @@ if __name__ == "__main__":
     p.add_argument("--plot-output", type=str, default="training_curves.png",
                     help="Where to save the train/test accuracy + communication cost plot "
                          "(default training_curves.png in the current directory).")
+    p.add_argument("--save-model-path", type=str, default=None,
+                    help="If set, save the best-checkpoint model weights to this path (e.g. "
+                         "'best_model.pt') via torch.save, plus the fitted StandardScaler and "
+                         "LabelEncoder alongside it as '<name>_preprocess.pkl' via joblib. "
+                         "Both are required for correct inference later -- the model alone "
+                         "cannot reproduce the exact feature scaling/label mapping it was "
+                         "trained with. Default: don't save anything (unchanged behavior).")
     p.add_argument("--model", type=str, default="gru", choices=["mlp", "cnn", "gru"],
                     help="Which architecture to train (default gru). mlp/cnn are row-independent "
                          "(--seq-window-size, --seq-sort-col, --preserve-aircraft-groups are "
@@ -894,4 +937,5 @@ if __name__ == "__main__":
          seq_window_size=args.seq_window_size, seq_sort_col=args.seq_sort_col,
          preserve_aircraft_groups=args.preserve_aircraft_groups,
          exclude_classes=exclude_classes, plot_output=args.plot_output,
-         model_type=args.model, mlp_hidden_sizes=mlp_hidden_sizes, cnn_channels=cnn_channels)
+         model_type=args.model, mlp_hidden_sizes=mlp_hidden_sizes, cnn_channels=cnn_channels,
+         save_model_path=args.save_model_path)
