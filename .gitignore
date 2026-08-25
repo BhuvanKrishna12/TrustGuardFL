@@ -1,0 +1,30 @@
+# --- Raw and processed data (GB-scale, never belongs in git) ---
+raw_data/
+data/
+*.csv
+*.csv.tar
+*.tar
+!requirements*.csv
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# --- Generated outputs (regenerate on every run, don't need history) ---
+training_curves.png
+*_curves.png
+test_curves.png
+*.png
+!docs/**/*.png
+
+# --- Model checkpoints, if any get saved to disk later ---
+*.pt
+*.pth
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+*.swp
