@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>FL-IDS Live Demo</title>
+<style>
+  body { font-family: -apple-system, sans-serif; background: #0f1419; color: #e6e6e6; margin: 0; padding: 24px; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { color: #8b949e; font-size: 13px; margin-bottom: 24px; }
+  .layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; }
+  .panel { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px; }
+  .client-node { padding: 10px 12px; border-radius: 8px; background: #1c2128; margin-bottom: 8px;
+                 border: 1px solid #30363d; cursor: pointer; transition: border-color .15s; }
+  .client-node.active { border-color: #58a6ff; background: #172033; }
+  .client-node .name { font-size: 13px; font-weight: 500; }
+  .client-node .status { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  button { background: #21262d; color: #e6e6e6; border: 1px solid #30363d; border-radius: 6px;
+           padding: 8px 14px; font-size: 13px; cursor: pointer; }
+  button:hover { border-color: #58a6ff; }
+  button.danger { border-color: #f85149; color: #ff7b72; }
+  button.danger:hover { background: #3d1418; }
+  button.active-toggle { background: #1f6feb; border-color: #1f6feb; color: white; }
+  .stream { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column-reverse; }
+  .row-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 6px;
+              margin-bottom: 6px; font-size: 12px; font-family: monospace; }
+  .row-item.benign { background: #10231a; border-left: 3px solid #3fb950; }
+  .row-item.attack { background: #2d1214; border-left: 3px solid #f85149; animation: flash .4s; }
+  @keyframes flash { from { background: #f85149; } to { background: #2d1214; } }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+  .badge.benign { background: #3fb95022; color: #3fb950; }
+  .badge.attack { background: #f8514922; color: #f85149; }
+  .probs { color: #8b949e; margin-left: auto; font-size: 11px; }
+  .stat-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; color: #8b949e; }
+  .stat-row b { color: #e6e6e6; }
+</style>
+</head>
+<body>
+  <h1>FL-IDS Live Detection Demo</h1>
+  <div class="subtitle">Select a client, inject an attack, watch the trained model react in real time</div>
+
+  <div class="layout">
+    <div class="panel">
+      <div style="font-size:13px;font-weight:500;margin-bottom:12px;">Clients</div>
+      <div id="clients"></div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid #30363d;">
+        <div class="stat-row"><span>Rows classified</span><b id="stat-total">0</b></div>
+        <div class="stat-row"><span>Attacks flagged</span><b id="stat-attacks">0</b></div>
+        <div class="stat-row"><span>Correctly identified</span><b id="stat-correct">0</b></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="controls" id="controls"></div>
+      <div class="stream" id="stream"></div>
+    </div>
+  </div>
+
+<script>
+const CLIENTS = [
+  { id: "laptop1", name: "Laptop 1 (RTX 3050)" },
+  { id: "laptop2", name: "Laptop 2 (CPU only)" },
+  { id: "macbook", name: "MacBook" },
+  { id: "mypc", name: "Bhuvan's PC (RTX 4060)" },
+];
+let activeClient = CLIENTS[0].id;
+let activeInjection = "none";
+let totalCount = 0, attackCount = 0, correctCount = 0;
+let polling = null;
+
+function renderClients() {
+  const el = document.getElementById("clients");
+  el.innerHTML = CLIENTS.map(c => `
+    <div class="client-node ${c.id === activeClient ? 'active' : ''}" onclick="selectClient('${c.id}')">
+      <div class="name">${c.name}</div>
+      <div class="status">idle -- awaiting real federation link</div>
+    </div>
+  `).join("");
+}
+
+function selectClient(id) {
+  activeClient = id;
+  renderClients();
+}
+
+async function loadAttackTypes() {
+  const info = await (await fetch("/api/model_info")).json();
+  const el = document.getElementById("controls");
+  let html = `<button class="active-toggle" onclick="setInjection('none', this)">Clean traffic</button>`;
+  for (const atk of info.available_injections) {
+    html += `<button class="danger" onclick="setInjection('${atk}', this)">Inject ${atk}</button>`;
+  }
+  el.innerHTML = html;
+}
+
+function setInjection(atk, btn) {
+  activeInjection = atk;
+  document.querySelectorAll("#controls button").forEach(b => b.classList.remove("active-toggle"));
+  btn.classList.add("active-toggle");
+}
+
+async function pollOnce() {
+  const res = await fetch(`/api/stream_sample?attack_type=${activeInjection}`);
+  const data = await res.json();
+  totalCount++;
+  if (data.is_attack) attackCount++;
+  document.getElementById("stat-total").textContent = totalCount;
+  document.getElementById("stat-attacks").textContent = attackCount;
+
+  const stream = document.getElementById("stream");
+  const item = document.createElement("div");
+  // Ground truth (what was actually injected) vs. the model's own
+  // prediction -- these can legitimately differ (the model is 87.79%
+  // accurate, not 100%), and showing BOTH is what makes a mismatch
+  // interpretable as "a real misclassification" rather than looking
+  // like an unexplained bug.
+  const truth = data.injected_attack_type === "none" ? "benign" : data.injected_attack_type;
+  const correct = truth === data.predicted_class;
+  if (correct) correctCount++;
+  document.getElementById("stat-correct").textContent = `${correctCount}/${totalCount}`;
+  item.className = `row-item ${data.is_attack ? 'attack' : 'benign'}`;
+  const topProbs = Object.entries(data.probabilities).sort((a,b) => b[1]-a[1]).slice(0,2)
+    .map(([k,v]) => `${k}: ${(v*100).toFixed(0)}%`).join("  ");
+  item.innerHTML = `
+    <span style="min-width:170px;">
+      <span style="color:#8b949e;">injected:</span> <b>${truth}</b>
+      <span style="color:#8b949e;"> -&gt; predicted:</span>
+      <span class="badge ${data.is_attack ? 'attack' : 'benign'}">${data.predicted_class}</span>
+      ${correct ? '<span style="color:#3fb950;">&#10003;</span>' : '<span style="color:#f85149;">&#10007; MISS</span>'}
+    </span>
+    <span>speed=${data.row.implied_speed_mps} msgs=${data.row.track_message_count} gap=${data.row.inter_arrival_s}s</span>
+    <span class="probs">${topProbs}</span>
+  `;
+  stream.appendChild(item);
+  while (stream.children.length > 40) stream.removeChild(stream.firstChild);
+}
+
+renderClients();
+loadAttackTypes();
+polling = setInterval(pollOnce, 900);
+</script>
+</body>
+</html>

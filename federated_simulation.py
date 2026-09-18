@@ -590,6 +590,35 @@ def plot_training_curves(history, output_path, best_round=None):
     print(f"\nSaved training curves: {output_path}")
 
 
+def build_model(model_type, n_features, n_classes, mlp_hidden_sizes=(64, 32), cnn_channels=(16, 32),
+                 device=None):
+    """
+    Single source of truth for constructing a model given an architecture
+    choice -- used by main()'s hand-rolled FedAvg loop, by
+    federated_simulation_flower.py's Flower client/server code, AND by
+    inference_server.py's demo backend, so all three paths build
+    IDENTICAL architectures from the same config.
+
+    device=None (default) uses this module's own DEVICE constant
+    (cuda if available), matching every existing caller's behavior
+    exactly. Pass an explicit device (e.g. torch.device("cpu")) to
+    override -- inference_server.py does this deliberately, since a
+    live demo shouldn't depend on whatever GPU happens to be on the
+    demo machine.
+    """
+    if device is None:
+        device = DEVICE
+    if model_type == "gru":
+        model = SimpleGRUNet(n_features, n_classes)
+    elif model_type == "cnn":
+        model = SimpleCNNnet(n_features, n_classes, channels=cnn_channels)
+    elif model_type == "mlp":
+        model = SimpleIDSNet(n_features, n_classes, hidden_sizes=mlp_hidden_sizes)
+    else:
+        raise ValueError(f"Unknown model_type: {model_type!r} (expected 'mlp', 'cnn', or 'gru')")
+    return model.to(device)
+
+
 def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunksize=200_000,
          n_rounds=None, seq_window_size=None, seq_sort_col="time", preserve_aircraft_groups=False,
          exclude_classes=None, plot_output="training_curves.png", model_type="gru",
@@ -682,16 +711,8 @@ def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunks
     X_global_test = np.concatenate([c["X_test"] for c in clients.values()])
     y_global_test = np.concatenate([c["y_test"] for c in clients.values()])
 
-    if model_type == "gru":
-        global_model = SimpleGRUNet(len(FEATURE_COLS), len(class_names)).to(DEVICE)
-    elif model_type == "cnn":
-        global_model = SimpleCNNnet(len(FEATURE_COLS), len(class_names),
-                                     channels=cnn_channels).to(DEVICE)
-    elif model_type == "mlp":
-        global_model = SimpleIDSNet(len(FEATURE_COLS), len(class_names),
-                                     hidden_sizes=mlp_hidden_sizes).to(DEVICE)
-    else:
-        raise ValueError(f"Unknown model_type: {model_type!r} (expected 'mlp', 'cnn', or 'gru')")
+    global_model = build_model(model_type, len(FEATURE_COLS), len(class_names),
+                                mlp_hidden_sizes=mlp_hidden_sizes, cnn_channels=cnn_channels)
     print(f"\nModel: {model_type.upper()}")
     payload_bytes = model_size_bytes(global_model)
     print(f"Model size: {payload_bytes / 1024:.1f} KB "
