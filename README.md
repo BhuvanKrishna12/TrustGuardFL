@@ -6,9 +6,6 @@ real OpenSky Network ADS-B state-vector data, simulating a network of
 independent ground receiver stations training a shared detection model
 without sharing raw traffic.
 
-**Author:** Bhuvan Krishna (Tony), B.Tech CSE (AI&ML), KMIT Hyderabad
-**Mentor:** Dr. M. Srinivas
-
 > **Scope note:** an earlier cross-domain UAV+ADS-B extension (GAF image
 > harmonization, comparing a UAV intrusion dataset against ADS-B) was
 > explored and then deliberately deprioritized. That work is preserved
