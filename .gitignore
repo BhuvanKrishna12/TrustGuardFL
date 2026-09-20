@@ -28,3 +28,4 @@ test_curves.png
 .DS_Store
 Thumbs.db
 *.swp
+*:Zone.Identifier
