@@ -41,7 +41,7 @@ import numpy as np
 import pandas as pd
 import torch
 from fastapi import FastAPI, Response
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -55,6 +55,14 @@ LABEL_ENCODER = None
 FEATURE_COLS = None
 CLASS_NAMES = None
 HOLDOUT_BY_CLASS = None  # dict: class_name -> DataFrame of real rows, or None if unavailable
+
+# FILE PLAYBACK mode (additive, separate from --holdout-data-path above):
+# instead of sampling a real row per requested class, steps through a real
+# labeled CSV's rows IN FILE ORDER, one per poll -- no injection, no
+# synthetic tampering, just "here's a real row, here's what the model said".
+PLAYBACK_ROWS = None      # list of (feature_row_dict, ground_truth_label) tuples, file order preserved, or None if unavailable
+PLAYBACK_CURSOR = 0       # index of the next row to serve; loops back to 0 after the last row
+PLAYBACK_FILENAME = None  # basename of --playback-csv, surfaced to the frontend via /api/model_info
 
 # Dedicated, genuinely-random generator for LIVE demo sampling -- deliberately
 # separate from federated_simulation.py's np.random.seed(42), which is set at
@@ -122,6 +130,68 @@ def load_holdout_data(path, max_rows_per_class=5000):
         pools[cname] = subset.reset_index(drop=True)
         print(f"  Loaded {len(pools[cname]):,} real '{cname}' rows from holdout data")
     return pools
+
+
+def load_playback_data(path):
+    """
+    Loads a real, labeled CSV (e.g. produced by this project's
+    make_class_sample_csv.py) for FILE PLAYBACK mode: unlike
+    --holdout-data-path above, which samples a row per requested class on
+    demand, playback mode steps through this file's rows IN ORDER, one per
+    poll -- no injection, no synthetic tampering, just real data and the
+    model's real prediction on it.
+
+    Ground truth is read from the file's own 'attack_type' column if
+    present, falling back to mapping a 'label' column (0/1) to
+    benign/attack -- the same convention load_holdout_data() and
+    opensky_fl_ids_pipeline.py's output use elsewhere in this project.
+
+    Fails loudly (never guesses/fabricates) if a required feature column is
+    missing entirely -- same philosophy as the rest of this codebase.
+    Missing individual feature VALUES are filled with -1, matching the
+    EXACT fillna(-1) convention used everywhere else here (training's own
+    prep_features(), and load_holdout_data() above) -- never dropped, for
+    the same reasons documented there.
+    """
+    df = pd.read_csv(path)
+    missing_cols = [c for c in FEATURE_COLS if c not in df.columns]
+    if missing_cols:
+        raise ValueError(
+            f"--playback-csv '{path}' is missing required feature column(s): {missing_cols}. "
+            f"Refusing to guess/fabricate values for missing columns -- the file must contain "
+            f"all {len(FEATURE_COLS)} feature columns the model was trained on."
+        )
+
+    if "attack_type" in df.columns:
+        ground_truth = df["attack_type"].astype(str).tolist()
+    elif "label" in df.columns:
+        ground_truth = df["label"].map(lambda v: "benign" if int(v) == 0 else "attack").tolist()
+    else:
+        raise ValueError(
+            f"--playback-csv '{path}' has neither an 'attack_type' nor a 'label' column -- "
+            f"cannot determine ground truth for playback."
+        )
+
+    n_incomplete = df[FEATURE_COLS].isna().any(axis=1).sum()
+    if n_incomplete > 0:
+        print(f"  Filling {n_incomplete:,} playback rows' missing feature values with -1 "
+              f"({n_incomplete/len(df):.1%} of loaded data) -- matches training's own "
+              f"prep_features() convention exactly, does not drop real attack data.")
+    df[FEATURE_COLS] = df[FEATURE_COLS].fillna(-1)
+
+    rows = []
+    for rec, truth in zip(df[FEATURE_COLS].to_dict(orient="records"), ground_truth):
+        row = {}
+        for c, v in rec.items():
+            if isinstance(v, (np.bool_, bool)):
+                row[c] = bool(v)
+            elif isinstance(v, (np.integer, np.floating)):
+                row[c] = v.item()
+            else:
+                row[c] = v
+        rows.append((row, truth))
+    print(f"  Loaded {len(rows):,} real rows for file playback from {path}")
+    return rows
 
 
 def sample_real_row(attack_type):
@@ -248,12 +318,51 @@ def stream_sample(attack_type: str = "none", response: Response = Response()):
     return result
 
 
+@app.get("/api/playback_sample")
+def playback_sample(response: Response = Response()):
+    """Steps through --playback-csv's real rows IN ORDER, one per call, and
+    returns the model's real prediction on each -- no injection, no
+    synthetic tampering. Loops back to row 0 after the last row. Shaped
+    consistently with /api/stream_sample's response, but ground truth comes
+    from the FILE's own label instead of an injected query param, and
+    playback_index/playback_total let the frontend show progress.
+
+    Same no-cache headers as /api/stream_sample, and for the same reason
+    documented there: without them a browser can silently cache a GET
+    response and keep serving it forever, which looks exactly like a
+    server-side bug even when the server is working correctly."""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    if PLAYBACK_ROWS is None:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "No --playback-csv was loaded on server startup -- "
+                               "file playback mode is unavailable."},
+        )
+    global PLAYBACK_CURSOR
+    row, ground_truth = PLAYBACK_ROWS[PLAYBACK_CURSOR]
+    served_index = PLAYBACK_CURSOR + 1  # 1-based, for display ("row 7 of 60")
+    PLAYBACK_CURSOR = (PLAYBACK_CURSOR + 1) % len(PLAYBACK_ROWS)
+    result = predict(row)
+    result["ground_truth"] = ground_truth
+    result["data_source"] = "file_playback"
+    result["playback_index"] = served_index
+    result["playback_total"] = len(PLAYBACK_ROWS)
+    result["row"] = {k: (round(v, 3) if isinstance(v, float) else v) for k, v in row.items()}
+    return result
+
+
 @app.get("/api/model_info")
 def model_info():
-    return {
+    info = {
         "class_names": list(CLASS_NAMES),
         "available_injections": list(ATTACK_INJECTIONS.keys()),
+        "playback_available": PLAYBACK_ROWS is not None,
     }
+    if PLAYBACK_ROWS is not None:
+        info["playback_total"] = len(PLAYBACK_ROWS)
+        info["playback_filename"] = PLAYBACK_FILENAME
+    return info
 
 
 @app.get("/")
@@ -304,6 +413,13 @@ if __name__ == "__main__":
     p.add_argument("--holdout-max-per-class", type=int, default=5000,
                     help="Cap on real rows loaded per class from the holdout file (default 5000) "
                          "-- kept modest since a live demo doesn't need more for variety.")
+    p.add_argument("--playback-csv", type=str, default=None,
+                    help="Optional CSV (e.g. from make_class_sample_csv.py) to step through IN "
+                         "FILE ORDER for 'File Playback' mode -- real rows, real predictions, no "
+                         "injection or synthetic tampering. Ground truth is read from the file's "
+                         "own 'attack_type' column (falls back to 'label' 0/1). Purely additive: "
+                         "the existing injection-based mode keeps working exactly as before "
+                         "whether or not this is given.")
     args = p.parse_args()
     load_model(args.model_path)
     if args.holdout_data_path:
@@ -312,4 +428,12 @@ if __name__ == "__main__":
     else:
         print("\nNo --holdout-data-path given -- using synthetic data generation (fallback).")
         HOLDOUT_BY_CLASS = None
+    if args.playback_csv:
+        print(f"\nLoading file-playback data from {args.playback_csv} ...")
+        PLAYBACK_ROWS = load_playback_data(args.playback_csv)
+        PLAYBACK_FILENAME = args.playback_csv.rsplit("/", 1)[-1]
+    else:
+        print("No --playback-csv given -- 'File Playback' mode will be unavailable.")
+        PLAYBACK_ROWS = None
+        PLAYBACK_FILENAME = None
     uvicorn.run(app, host="0.0.0.0", port=args.port)

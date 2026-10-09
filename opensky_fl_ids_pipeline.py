@@ -87,6 +87,20 @@ REPLAY_SHIFT_RANGE_S = (2, 900)                # was fixed at uniform(60, 600)
 FLOODING_DUP_COUNT_RANGE = (2, 11)             # rng.integers high is exclusive; was always exactly 5
 FLOODING_OFFSET_RANGE_S = (0.01, 0.5)          # was fixed at 0.1
 
+# --- Near-zero time-gap floor for Tier A rate features --------------------
+# A real ablation test proved the trained model's "flooding" detection was
+# keying almost entirely on a -1 sentinel (the downstream fill value for
+# NaN) rather than genuine timing signal: on real flooding rows that didn't
+# happen to produce that sentinel, detection accuracy collapsed from 99.9%
+# to 1.0%. The sentinel came from here -- see the comment in
+# add_tier_a_features for the full mechanism and the fix. 0.1s is below any
+# realistic real-world ADS-B squitter interval (~0.5s typical minimum) but
+# strictly above the smallest synthetic flooding offset
+# (FLOODING_OFFSET_RANGE_S starts at 0.01s), so it only ever engages for
+# near-duplicate/near-zero time gaps, never for genuine fast-but-real
+# reporting.
+MIN_DT_FLOOR_S = 0.1
+
 # Above this gap, treat consecutive sightings of the same icao24 as
 # separate sessions (e.g. different collection days) rather than one
 # continuous flight -- see add_tier_a_features for why this matters when
@@ -228,11 +242,6 @@ def add_tier_a_features(df: pd.DataFrame) -> pd.DataFrame:
     df["prev_baroalt"] = shifted("baroaltitude")
 
     dt = df["time"] - df["prev_time"]
-    # Guard against near-zero dt (duplicate/near-duplicate timestamps are
-    # common in crowdsourced ADS-B and produce physically absurd implied
-    # speeds when divided by a sub-second interval). Anything under 1s
-    # is treated as unreliable for a kinematic estimate.
-    #
     # ALSO guard against multi-day session breaks: when combining several
     # non-consecutive days (e.g. multiple Mondays' worth of data), the
     # same icao24 can legitimately reappear days/weeks later. That's a
@@ -244,28 +253,64 @@ def add_tier_a_features(df: pd.DataFrame) -> pd.DataFrame:
     # is set well above any realistic single-region coverage gap but well
     # below the gap between separate collection days.
     is_session_break = dt.abs() > SESSION_BREAK_SECONDS
-    dt_safe = dt.where((dt.abs() >= 1) & (~is_session_break), np.nan)
+
+    # Denominator for the rate-based features below (implied_speed_mps,
+    # vrate_consistency_delta's implied_vrate, turn_rate_deg_s).
+    #
+    # Previously, any |dt| < 1s was masked to NaN entirely ("unreliable for
+    # a kinematic estimate") to avoid dividing by a near-zero interval.
+    # That guard is right that near-zero dt is numerically unstable, but it
+    # produced an opaque NaN/-1 sentinel for one specific, common case:
+    # FLOODING attack rows, which are near-exact duplicates of a previous
+    # message inserted with a sub-second time offset (see
+    # FLOODING_OFFSET_RANGE_S, as low as 0.01s). Because Tier A features are
+    # recomputed AFTER row duplication (see process_chunk), a duplicate
+    # row's "previous message" in the sorted sequence is the literal
+    # original it was copied from -- near-zero position/altitude/heading
+    # delta over a near-zero time delta. A real ablation test showed the
+    # trained model was keying almost entirely on that -1 sentinel pattern
+    # rather than genuine timing signal (accuracy collapsed from 99.9% to
+    # 1.0% on flooding rows that didn't happen to produce it).
+    #
+    # The fix: floor dt's magnitude at MIN_DT_FLOOR_S instead of discarding
+    # it. dt is guaranteed >= 0 here for any row with a real predecessor
+    # (df is sorted ascending by ["icao24", "time"]) and NaN for the first
+    # row of each aircraft's block (no predecessor) -- clip() leaves NaN
+    # untouched, so that case is unaffected. For a near-duplicate row, the
+    # true position/altitude/heading delta is also genuinely ~0, so
+    # dividing that ~0 by the floored ~0.1s now correctly yields a
+    # genuinely small, finite, informative rate ("almost no motion since
+    # the last message") instead of NaN. Rows whose |dt| was already >=
+    # MIN_DT_FLOOR_S are completely unchanged -- this only changes the
+    # near-zero case. Session breaks still become NaN below: a multi-day
+    # absence is a real gap, not a near-duplicate, and flooring across it
+    # would fabricate a meaningless "speed".
+    dt_denom = dt.clip(lower=MIN_DT_FLOOR_S).where(~is_session_break, np.nan)
 
     dist_m = haversine_m(df["prev_lat"], df["prev_lon"], df["lat"], df["lon"])
-    df["implied_speed_mps"] = dist_m / dt_safe  # Tier A: position-derived speed
+    df["implied_speed_mps"] = dist_m / dt_denom  # Tier A: position-derived speed
 
     # Consistency check: does implied speed agree with broadcast velocity?
     df["speed_consistency_delta"] = (df["implied_speed_mps"] - df["velocity"]).abs()
 
     # Altitude-rate consistency: does vertrate agree with baroaltitude change?
-    implied_vrate = (df["baroaltitude"] - df["prev_baroalt"]) / dt_safe
+    implied_vrate = (df["baroaltitude"] - df["prev_baroalt"]) / dt_denom
     df["vrate_consistency_delta"] = (implied_vrate - df["vertrate"]).abs()
 
-    # Inter-arrival time per aircraft (flooding / gap detection). Session
-    # breaks are set to NaN here too -- a multi-day absence isn't a
-    # "coverage gap" in the same sense is_low_coverage_region models, and
-    # would otherwise appear as an extreme, misleading outlier.
+    # Inter-arrival time per aircraft (flooding / gap detection). This
+    # keeps the TRUE, unfloored dt -- it's a reported interval, not a ratio
+    # denominator, so there's no division instability to guard against, and
+    # flooring it would hide the real near-zero gap that is itself part of
+    # the flooding signal. Session breaks are set to NaN here too -- a
+    # multi-day absence isn't a "coverage gap" in the same sense
+    # is_low_coverage_region models, and would otherwise appear as an
+    # extreme, misleading outlier.
     df["inter_arrival_s"] = dt.where(~is_session_break, np.nan)
 
     # Turn rate from heading, wrapped to [-180, 180]
     prev_heading = shifted("heading")
     dh = (df["heading"] - prev_heading + 180) % 360 - 180
-    df["turn_rate_deg_s"] = dh / dt_safe
+    df["turn_rate_deg_s"] = dh / dt_denom
 
     df.drop(columns=["prev_lat", "prev_lon", "prev_time", "prev_baroalt"], inplace=True)
     return df

@@ -38,6 +38,8 @@
 <body>
   <h1>FL-IDS Live Detection Demo</h1>
   <div class="subtitle">Select a client, inject an attack, watch the trained model react in real time</div>
+  <div class="controls" id="mode-tabs" style="display:none;margin-bottom:12px;"></div>
+  <div id="data-source-badge" style="font-size:12px;margin-bottom:16px;padding:6px 10px;border-radius:6px;display:inline-block;"></div>
 
   <div class="layout">
     <div class="panel">
@@ -67,6 +69,13 @@ let activeClient = CLIENTS[0].id;
 let activeInjection = "none";
 let totalCount = 0, attackCount = 0, correctCount = 0;
 let polling = null;
+let modelInfo = null;
+// "injection" (the original, default behavior -- inject synthetic/sampled
+// attacks by class) or "playback" (step through a real CSV's real rows in
+// order). Controls which endpoint pollOnce hits and how the feed renders
+// ground truth; the "playback" tab is only ever shown when the server
+// reports playback_available.
+let currentMode = "injection";
 
 function renderClients() {
   const el = document.getElementById("clients");
@@ -84,13 +93,40 @@ function selectClient(id) {
 }
 
 async function loadAttackTypes() {
-  const info = await (await fetch("/api/model_info")).json();
+  modelInfo = await (await fetch("/api/model_info")).json();
+  renderModeTabs();
+  renderInjectionControls();
+}
+
+function renderModeTabs() {
+  const el = document.getElementById("mode-tabs");
+  if (!modelInfo.playback_available) {
+    // Server has no --playback-csv loaded -- don't show a tab for a mode
+    // that has nothing to play back, no broken UI.
+    el.style.display = "none";
+    return;
+  }
+  el.style.display = "flex";
+  el.innerHTML = `
+    <button class="${currentMode === 'injection' ? 'active-toggle' : ''}" onclick="setMode('injection')">Live Injection</button>
+    <button class="${currentMode === 'playback' ? 'active-toggle' : ''}" onclick="setMode('playback')">File Playback</button>
+  `;
+}
+
+function renderInjectionControls() {
   const el = document.getElementById("controls");
-  let html = `<button class="active-toggle" onclick="setInjection('none', this)">Clean traffic</button>`;
-  for (const atk of info.available_injections) {
+  let html = `<button class="${activeInjection === 'none' ? 'active-toggle' : ''}" onclick="setInjection('none', this)">Clean traffic</button>`;
+  for (const atk of modelInfo.available_injections) {
     html += `<button class="danger" onclick="setInjection('${atk}', this)">Inject ${atk}</button>`;
   }
   el.innerHTML = html;
+}
+
+function renderPlaybackControls() {
+  // Nothing to inject in this mode -- just show progress through the file.
+  const el = document.getElementById("controls");
+  const label = modelInfo.playback_filename || "loaded file";
+  el.innerHTML = `<div style="font-size:13px;color:#8b949e;">Playing back <b style="color:#e6e6e6;">${label}</b> -- <span id="playback-progress">row ? / ${modelInfo.playback_total}</span> &mdash; looping</div>`;
 }
 
 function setInjection(atk, btn) {
@@ -99,22 +135,81 @@ function setInjection(atk, btn) {
   btn.classList.add("active-toggle");
 }
 
+function setMode(mode) {
+  if (mode === currentMode) return;
+  currentMode = mode;
+  // Switching modes resets the running stats and clears the feed --
+  // DELIBERATE, not an oversight: File Playback measures accuracy on real
+  // rows from a fixed file, Live Injection measures it on
+  // sampled/synthetic rows by class, and mixing the two into one
+  // total/attacks/correct counter would make neither number meaningful.
+  totalCount = 0;
+  attackCount = 0;
+  correctCount = 0;
+  document.getElementById("stat-total").textContent = totalCount;
+  document.getElementById("stat-attacks").textContent = attackCount;
+  document.getElementById("stat-correct").textContent = "0/0";
+  document.getElementById("stream").innerHTML = "";
+  renderModeTabs();
+  if (mode === "playback") {
+    renderPlaybackControls();
+  } else {
+    renderInjectionControls();
+  }
+}
+
 async function pollOnce() {
-  const res = await fetch(`/api/stream_sample?attack_type=${activeInjection}`);
-  const data = await res.json();
+  let data;
+  if (currentMode === "playback") {
+    const res = await fetch(`/api/playback_sample`);
+    data = await res.json();
+    if (data.error) return;  // shouldn't happen -- the tab is hidden whenever playback is unavailable
+    const progress = document.getElementById("playback-progress");
+    if (progress) progress.textContent = `row ${data.playback_index} / ${data.playback_total}`;
+  } else {
+    const res = await fetch(`/api/stream_sample?attack_type=${activeInjection}`);
+    data = await res.json();
+  }
+  renderResult(data);
+}
+
+function renderResult(data) {
   totalCount++;
   if (data.is_attack) attackCount++;
   document.getElementById("stat-total").textContent = totalCount;
   document.getElementById("stat-attacks").textContent = attackCount;
 
+  const badge = document.getElementById("data-source-badge");
+  if (data.data_source === "file_playback") {
+    // Genuinely real data, so it reuses the "real" green styling.
+    badge.textContent = `Data source: FILE PLAYBACK (${modelInfo.playback_filename || "loaded file"})`;
+    badge.style.background = "#10231a";
+    badge.style.color = "#3fb950";
+    badge.style.border = "1px solid #3fb95044";
+  } else if (data.data_source === "real_holdout") {
+    badge.textContent = "Data source: REAL held-out data";
+    badge.style.background = "#10231a";
+    badge.style.color = "#3fb950";
+    badge.style.border = "1px solid #3fb95044";
+  } else {
+    badge.textContent = "Data source: SYNTHETIC (no --holdout-data-path given, or this class had zero real rows)";
+    badge.style.background = "#2d1c0a";
+    badge.style.color = "#e3a008";
+    badge.style.border = "1px solid #e3a00844";
+  }
+
   const stream = document.getElementById("stream");
   const item = document.createElement("div");
-  // Ground truth (what was actually injected) vs. the model's own
+  // Ground truth -- what was actually injected (Live Injection mode) or the
+  // file's own real label (File Playback mode) -- vs. the model's own
   // prediction -- these can legitimately differ (the model is 87.79%
   // accurate, not 100%), and showing BOTH is what makes a mismatch
   // interpretable as "a real misclassification" rather than looking
   // like an unexplained bug.
-  const truth = data.injected_attack_type === "none" ? "benign" : data.injected_attack_type;
+  const truth = data.data_source === "file_playback"
+    ? data.ground_truth
+    : (data.injected_attack_type === "none" ? "benign" : data.injected_attack_type);
+  const truthLabel = data.data_source === "file_playback" ? "actual" : "injected";
   const correct = truth === data.predicted_class;
   if (correct) correctCount++;
   document.getElementById("stat-correct").textContent = `${correctCount}/${totalCount}`;
@@ -123,7 +218,7 @@ async function pollOnce() {
     .map(([k,v]) => `${k}: ${(v*100).toFixed(0)}%`).join("  ");
   item.innerHTML = `
     <span style="min-width:170px;">
-      <span style="color:#8b949e;">injected:</span> <b>${truth}</b>
+      <span style="color:#8b949e;">${truthLabel}:</span> <b>${truth}</b>
       <span style="color:#8b949e;"> -&gt; predicted:</span>
       <span class="badge ${data.is_attack ? 'attack' : 'benign'}">${data.predicted_class}</span>
       ${correct ? '<span style="color:#3fb950;">&#10003;</span>' : '<span style="color:#f85149;">&#10007; MISS</span>'}
