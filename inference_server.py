@@ -54,6 +54,7 @@ SCALER = None
 LABEL_ENCODER = None
 FEATURE_COLS = None
 CLASS_NAMES = None
+FEATURE_TRANSFORM = "none"
 HOLDOUT_BY_CLASS = None  # dict: class_name -> DataFrame of real rows, or None if unavailable
 
 # FILE PLAYBACK mode (additive, separate from --holdout-data-path above):
@@ -267,6 +268,7 @@ def predict(row: dict):
         # isn't pre-filtered.
         raise ValueError(f"Row contains NaN in one or more features, cannot predict: "
                           f"{X.isna().sum().to_dict()}")
+    X = fs.apply_feature_transform(X, FEATURE_TRANSFORM)
     X_scaled = SCALER.transform(X)
     with torch.no_grad():
         logits = MODEL(torch.tensor(X_scaled, dtype=torch.float32))
@@ -371,7 +373,7 @@ def index():
 
 
 def load_model(model_path):
-    global MODEL, SCALER, LABEL_ENCODER, FEATURE_COLS, CLASS_NAMES
+    global MODEL, SCALER, LABEL_ENCODER, FEATURE_COLS, CLASS_NAMES, FEATURE_TRANSFORM
     payload = torch.load(model_path, weights_only=False)
     if payload["model_type"] == "gru":
         raise ValueError(
@@ -381,6 +383,7 @@ def load_model(model_path):
             "(a mini rolling history per client) to demo meaningfully."
         )
     FEATURE_COLS = payload["feature_cols"]
+    FEATURE_TRANSFORM = payload.get("feature_transform", "none")
     CLASS_NAMES = payload["class_names"]
     MODEL = fs.build_model(
         payload["model_type"], payload["n_features"], len(CLASS_NAMES),

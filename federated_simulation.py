@@ -334,6 +334,41 @@ def prep_features(df: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
+LOG_TRANSFORM_COLS = [
+    "implied_speed_mps",
+    "speed_consistency_delta",
+    "vrate_consistency_delta",
+    "inter_arrival_s",
+    "turn_rate_deg_s",
+    "track_message_count",
+    "region_avg_inter_arrival",
+]
+
+
+def apply_feature_transform(X: pd.DataFrame, mode: str = "none") -> pd.DataFrame:
+    """Optional transform applied AFTER prep_features() (so -1 marks missing
+    values) and BEFORE the StandardScaler. mode="none" returns X unchanged.
+    mode="log": for each column in LOG_TRANSFORM_COLS adds '<col>_missing'
+    (1.0 where the value is the -1 placeholder), sets the placeholder to 0,
+    then applies sign(x) * log(1 + |x|). 13 raw columns -> 20 model inputs.
+    Saved in the checkpoint so inference applies the same transform."""
+    if mode in (None, "none"):
+        return X
+    if mode != "log":
+        raise ValueError(f"Unknown feature transform '{mode}' (expected 'none' or 'log')")
+    X = X.copy()
+    flags = {}
+    for c in LOG_TRANSFORM_COLS:
+        v = X[c].astype(float)
+        missing = v == -1
+        flags[f"{c}_missing"] = missing.astype(float)
+        v = v.where(~missing, 0.0)
+        X[c] = np.sign(v) * np.log1p(np.abs(v))
+    for name, col in flags.items():
+        X[name] = col
+    return X
+
+
 def build_sequences(df_region: pd.DataFrame, feature_cols, window_size=SEQ_WINDOW_SIZE,
                      label_col="_label_encoded", sort_col="time"):
     """
@@ -622,7 +657,8 @@ def build_model(model_type, n_features, n_classes, mlp_hidden_sizes=(64, 32), cn
 def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunksize=200_000,
          n_rounds=None, seq_window_size=None, seq_sort_col="time", preserve_aircraft_groups=False,
          exclude_classes=None, plot_output="training_curves.png", model_type="gru",
-         mlp_hidden_sizes=(64, 32), cnn_channels=(16, 32), save_model_path=None):
+         mlp_hidden_sizes=(64, 32), cnn_channels=(16, 32), save_model_path=None,
+         feature_transform="none"):
     # Allow CLI overrides of module-level defaults without editing the file --
     # both were hardcoded constants before, which meant testing a different
     # window size or round count required a code edit each time.
@@ -664,6 +700,11 @@ def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunks
               f"{sorted(df['attack_type'].unique())}")
 
     X = prep_features(df)
+    X = apply_feature_transform(X, feature_transform)
+    n_features = X.shape[1]
+    if feature_transform not in (None, "none"):
+        print(f"  Feature transform '{feature_transform}': {len(FEATURE_COLS)} raw columns "
+              f"-> {n_features} model inputs")
     le = LabelEncoder()
     y = le.fit_transform(df["attack_type"].astype(str))
     class_names = le.classes_
@@ -711,7 +752,7 @@ def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunks
     X_global_test = np.concatenate([c["X_test"] for c in clients.values()])
     y_global_test = np.concatenate([c["y_test"] for c in clients.values()])
 
-    global_model = build_model(model_type, len(FEATURE_COLS), len(class_names),
+    global_model = build_model(model_type, n_features, len(class_names),
                                 mlp_hidden_sizes=mlp_hidden_sizes, cnn_channels=cnn_channels)
     print(f"\nModel: {model_type.upper()}")
     payload_bytes = model_size_bytes(global_model)
@@ -806,8 +847,9 @@ def main(paths, max_total_rows=2_000_000, max_rows_per_region_class=None, chunks
             "model_state_dict": best_state if best_state is not None
                                  else global_model.state_dict(),
             "model_type": model_type,
-            "n_features": len(FEATURE_COLS),
+            "n_features": n_features,
             "feature_cols": FEATURE_COLS,
+            "feature_transform": feature_transform or "none",
             "class_names": list(class_names),
             "mlp_hidden_sizes": mlp_hidden_sizes,
             "cnn_channels": cnn_channels,
@@ -940,6 +982,9 @@ if __name__ == "__main__":
                          "genuinely plateaued (not just needs more rounds) at the current row "
                          "budget -- check model size afterward, same communication-cost caveat "
                          "as --mlp-hidden-sizes.")
+    p.add_argument("--feature-transform", type=str, default="none", choices=["none", "log"],
+                   help="'none' (default) or 'log': signed log1p on 7 heavy-tailed features "
+                        "plus a 0/1 missing flag for each. Saved in the checkpoint.")
     args = p.parse_args()
     # Preserve the distinction between "flag not passed" (None -- lets
     # main() apply the GRU auto-exclude default) and "flag explicitly
@@ -959,4 +1004,4 @@ if __name__ == "__main__":
          preserve_aircraft_groups=args.preserve_aircraft_groups,
          exclude_classes=exclude_classes, plot_output=args.plot_output,
          model_type=args.model, mlp_hidden_sizes=mlp_hidden_sizes, cnn_channels=cnn_channels,
-         save_model_path=args.save_model_path)
+         save_model_path=args.save_model_path, feature_transform=args.feature_transform)
