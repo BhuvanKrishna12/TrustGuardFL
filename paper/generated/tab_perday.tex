@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Results per Held-Out Day at Full Correction ($s=1$, Full Feature Set)}
+\label{tab:perday}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+& & \multicolumn{3}{c}{Fed.\ CNN} & \multicolumn{3}{c}{Central CNN} & \multicolumn{3}{c}{LightGBM} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}
+Day & Rows & Macro F1 & FAR & Atk.\ rec. & Macro F1 & FAR & Atk.\ rec. & Macro F1 & FAR & Atk.\ rec. \\
+\midrule
+-- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+-- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+-- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+-- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. The day of a row is the UTC date of its last position update (the replay attack shifts the time field but not this one).}
+\end{table*}

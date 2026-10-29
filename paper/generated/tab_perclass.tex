@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Per-Class Precision, Recall and F1 at Full Correction ($s=1$, Full Feature Set)}
+\label{tab:perclass}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+& & \multicolumn{3}{c}{Fed.\ CNN} & \multicolumn{3}{c}{Central CNN} & \multicolumn{3}{c}{LightGBM} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}
+Class & Support & P & R & F1 & P & R & F1 & P & R & F1 \\
+\midrule
+Benign & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Flooding & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Ghost aircraft & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+GPS spoof & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Replay & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Velocity spoof & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Support: held-out rows of the class.}
+\end{table*}

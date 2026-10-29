@@ -71,6 +71,7 @@ MODEL = None
 SCALER = None
 FEATURE_COLS = None
 CLASS_NAMES = None
+FEATURE_TRANSFORM = "none"
 
 
 def load_model(model_path):
@@ -78,7 +79,7 @@ def load_model(model_path):
     load_model() does -- same payload keys, same GRU rejection, same
     paired-scaler path convention -- so this script never drifts from
     the one already-debugged loading path."""
-    global MODEL, SCALER, FEATURE_COLS, CLASS_NAMES
+    global MODEL, SCALER, FEATURE_COLS, CLASS_NAMES, FEATURE_TRANSFORM
     payload = torch.load(model_path, weights_only=False)
     if payload["model_type"] == "gru":
         raise ValueError(
@@ -89,6 +90,7 @@ def load_model(model_path):
             "run meaningfully. Re-run with an mlp or cnn checkpoint."
         )
     FEATURE_COLS = payload["feature_cols"]
+    FEATURE_TRANSFORM = payload.get("feature_transform", "none")
     CLASS_NAMES = payload["class_names"]
     MODEL = fs.build_model(
         payload["model_type"], payload["n_features"], len(CLASS_NAMES),
@@ -157,6 +159,7 @@ def predict_batch(X: pd.DataFrame):
     if len(Xf) == 0:
         return np.array([], dtype=int), np.zeros((0, len(CLASS_NAMES))), valid_mask
 
+    Xf = fs.apply_feature_transform(Xf, FEATURE_TRANSFORM)
     X_scaled = SCALER.transform(Xf)
     with torch.no_grad():
         logits = MODEL(torch.tensor(X_scaled, dtype=torch.float32))

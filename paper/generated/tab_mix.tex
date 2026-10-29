@@ -1,0 +1,29 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Class Mix and Split Sizes}
+\label{tab:mix}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrrr}
+\toprule
+& Training days & Training sample & Test \\
+\midrule
+Benign & -- & -- & -- \\
+Flooding & -- & -- & -- \\
+Ghost aircraft & -- & -- & -- \\
+GPS spoof & -- & -- & -- \\
+Replay & -- & -- & -- \\
+Velocity spoof & -- & -- & -- \\
+\midrule
+Rows & -- & -- & -- \\
+Aircraft (icao24) & -- & -- & -- \\
+\midrule
+Sample from -- & & -- & \\
+Sample from -- & & -- & \\
+Sample from -- & & -- & \\
+Sample from -- & & -- & \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Class shares in \%. Training days: all rows of the four training files (the prior used for correction). Training sample: the capped sample models are trained on (\R{sampler} sampler). Test: the held-out sample. The last rows give the share of the training sample drawn from each training day.}
+\end{table}

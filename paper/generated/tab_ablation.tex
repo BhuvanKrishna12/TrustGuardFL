@@ -1,0 +1,29 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Full versus Core Feature Set}
+\label{tab:ablation}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lllrrrrrrrrr}
+\toprule
+& & & & & & \multicolumn{6}{c}{Recall} \\ \cmidrule(lr){7-12}
+$s$ & Model & Features & Macro F1 & FAR & Atk.\ rec. & Benign & Flooding & Ghost aircraft & GPS spoof & Replay & Velocity spoof \\
+\midrule
+1 & Fed.\ CNN & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ & Central CNN & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ & LightGBM & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\midrule
+0.5 & Fed.\ CNN & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ & Central CNN & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ & LightGBM & Full & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+ &  & Core & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. The core set keeps implied speed, speed and vertical-rate consistency, inter-arrival time, turn rate, regional inter-arrival baseline and the stale flag.}
+\end{table*}

@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Federated versus Centralized Training on Identical Rows}
+\label{tab:fedcentral}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllrrrrr}
+\toprule
+Features & Model & $s$ & Accuracy & FAR & Missed attacks & Attack recall & Macro F1 \\
+\midrule
+Full & Fed.\ CNN & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & Central CNN & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & LightGBM & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & \emph{Fed.$-$central} & 0 & & -- -- & & -- -- & -- -- \\
+ & \emph{Fed.$-$central} & 1 & & -- -- & & -- -- & -- -- \\
+\midrule
+Core & Fed.\ CNN & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & Central CNN & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & LightGBM & 0 & -- & -- & -- & -- & -- \\
+ &  & 1 & -- & -- & -- & -- & -- \\
+ & \emph{Fed.$-$central} & 0 & & -- -- & & -- -- & -- -- \\
+ & \emph{Fed.$-$central} & 1 & & -- -- & & -- -- & -- -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Fed.\ CNN and Central CNN share architecture, scaler, class weights, optimizer, training rows and validation rows; only the training procedure differs. Fed.$-$central: paired difference per seed in percentage points, mean and 95\% $t$-interval over seeds. Missed attacks: attack rows predicted benign over attack rows.}
+\end{table*}

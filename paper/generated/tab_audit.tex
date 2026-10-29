@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\caption{Features and Leakage Audit}\label{tab:audit}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{r l >{\raggedright\arraybackslash}X l l >{\raggedright\arraybackslash}X l l c l}\toprule
+No. & Feature & Definition (v3) & Causal? & Test-day data? & Construction artifact & Max AUC (attack) & Max miss.\ AUC & Core & Decision \\\midrule
+1 & implied\_speed\_mps & haversine to previous fix / max(dt, 0.1 s) & yes & own past & ghost: missing (1-row track); flood: speed near 0 & -- & -- & $\checkmark$ & keep \\
+2 & speed\_consistency\_delta & $|$implied speed - velocity$|$ & yes & own past & ghost: missing & -- & -- & $\checkmark$ & keep \\
+3 & vrate\_consistency\_delta & $|$d(baroalt)/dt - vertrate$|$ & yes & own past & ghost: missing; vel: vertrate filled, boost at least 5 m/s & -- & -- & $\checkmark$ & keep \\
+4 & inter\_arrival\_s & unfloored gap to previous message & yes & own past & ghost: missing; flood: sub-second gaps off the 10 s grid & -- & -- & $\checkmark$ & keep \\
+5 & turn\_rate\_deg\_s & wrapped heading change / max(dt, 0.1 s) & yes & own past & ghost: missing & -- & -- & $\checkmark$ & keep \\
+6 & squawk\_changed & previous and current code present and different & yes & own past & none (no attack edits squawk) & -- & -- &  & exclude \\
+7 & region\_avg\_inter\_arrival & clean mean gap of the 10 deg cell over the chunk; median if unmapped & no & chunk & gps: re-mapped to spoofed cell (and client) & -- & -- & $\checkmark$ & keep \\
+8 & is\_low\_coverage\_region & regional mean gap above chunk Q75 & no & chunk & gps: via region lookup & -- & -- &  & exclude \\
+9 & icao24\_valid\_format & address is 6 lowercase hex digits & yes & no & none (constant; ghost ids valid) & -- & -- &  & exclude \\
+10 & track\_message\_count & running count of the address in the chunk & yes & own past & ghost: always 1 & -- & -- &  & exclude \\
+11 & is\_stale & time - lastcontact over 15 s & yes & no & none & -- & -- & $\checkmark$ & keep \\
+12 & is\_physically\_implausible & implied speed over 400 m/s & yes & own past & v2 only: benign rows over 400 m/s dropped & -- & -- &  & exclude \\
+13 & is\_climbing\_or\_descending & $|$vertrate$|$ over 2.5 m/s & yes & no & vel: boost of at least 5 m/s & -- & -- &  & exclude \\
+\bottomrule\end{tabularx}
+\par\smallskip\parbox{\textwidth}{\scriptsize Audit data: placeholder; audit numbers pending a run of leakage\_audit.py on real data. Flag (bold): single-feature ROC AUC $\geq$ 0.95 or missing-indicator AUC $\geq$ 0.9 for some attack class vs benign; AUC reported as $\max(\mathrm{AUC}, 1-\mathrm{AUC})$ with missing values filled with $-1$. Causal: uses only the row and earlier messages of the same aircraft. Test-day data: own past = earlier messages of the same aircraft; chunk = statistic over all clean rows of the chunk, including later ones.}
+\end{table*}

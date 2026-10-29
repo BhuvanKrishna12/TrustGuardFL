@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Old (v2) versus Corrected (v3) Pipeline (Full Feature Set)}
+\label{tab:v2v3}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllrrrrr}
+\toprule
+Model & $s$ & Data & Macro F1 & FAR & Atk.\ rec. & Flooding rec. & Ghost rec. \\
+\midrule
+LightGBM & 0 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & -- & -- & -- & -- & -- \\
+ & 1 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & -- & -- & -- & -- & -- \\
+\midrule
+Fed.\ CNN & 0 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & -- & -- & -- & -- & -- \\
+ & 1 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over seeds, in \%. v2: the earlier labelled files and test sample; v3: the corrected pipeline. Each version is evaluated on its own test sample, drawn the same way.}
+\end{table*}

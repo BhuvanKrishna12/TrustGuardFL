@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Test Rows from Aircraft Never Seen in Training ($s=1$, Full Feature Set)}
+\label{tab:unseen}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+& \multicolumn{3}{c}{All test rows} & \multicolumn{3}{c}{Unseen aircraft} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Model & Macro F1 & FAR & Atk.\ rec. & Macro F1 & FAR & Atk.\ rec. \\
+\midrule
+Fed.\ CNN & -- & -- & -- & -- & -- & -- \\
+Central CNN & -- & -- & -- & -- & -- & -- \\
+LightGBM & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. \R{overlap-rows}\% of test rows and \R{overlap-aircraft}\% of test aircraft addresses also occur in the training files. Unseen-aircraft subset: \R{unseenrows} rows (benign \R{unseen-support-benign}, flooding \R{unseen-support-flooding}, ghost aircraft \R{unseen-support-ghost}, gps spoof \R{unseen-support-gps}, replay \R{unseen-support-replay}, velocity spoof \R{unseen-support-velocity}). Ghost rows carry fabricated addresses and are therefore almost all in this subset.}
+\end{table*}

@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{LightGBM Feature Importance (Gain Share)}
+\label{tab:importance}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrr}
+\toprule
+Feature & Full set & Core set \\
+\midrule
+implied\_speed\_mps & -- & -- \\
+speed\_consistency\_delta & -- & -- \\
+vrate\_consistency\_delta & -- & -- \\
+inter\_arrival\_s & -- & -- \\
+turn\_rate\_deg\_s & -- & -- \\
+track\_message\_count & -- & n/a \\
+is\_physically\_implausible & -- & n/a \\
+squawk\_changed & -- & n/a \\
+icao24\_valid\_format & -- & n/a \\
+is\_stale & -- & -- \\
+region\_avg\_inter\_arrival & -- & -- \\
+is\_low\_coverage\_region & -- & n/a \\
+is\_climbing\_or\_descending & -- & n/a \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Share of total split gain; n/a: feature not in the core set. Correlated features can substitute for each other, so a low share does not rule out leakage.}
+\end{table}

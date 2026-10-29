@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\caption{Headline Results on the Held-Out Days (Full Feature Set)}
+\label{tab:headline}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{llrrrr}
+\toprule
+Model & $s$ & Acc. & FAR & Atk.\ rec. & Macro F1 \\
+\midrule
+Fed.\ CNN & 0 & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- \\
+\midrule
+Central CNN & 0 & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- \\
+\midrule
+LightGBM & 0 & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. FAR: false alarm rate; Atk.\ rec.: average recall over the five attack classes; $s$: correction strength.}
+\end{table}

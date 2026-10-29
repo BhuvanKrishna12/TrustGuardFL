@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Client Population}
+\label{tab:clients}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lr}
+\toprule
+Quantity & Value \\
+\midrule
+Clients (region cells) & -- \\
+Region cells dropped ($<$-- rows) & -- \\
+Rows per client, min & -- \\
+Rows per client, median & -- \\
+Rows per client, max & -- \\
+Label JSD to global, mean & -- \\
+Label JSD to global, max & -- \\
+Clients missing $\geq$1 class (\%) & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Rows per client count training plus validation rows of the capped sample. JSD: Jensen-Shannon divergence (base 2, range 0 to 1) between a client's label distribution and the pooled one.}
+\end{table}

@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Single-Rule Baselines on the Test Set}
+\label{tab:rules}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}Xrrr@{}}
+\toprule
+Class & Rule & Recall & Prec. & FAR \\
+\midrule
+Ghost aircraft & All four rate features missing & -- & -- & -- \\
+Flooding & Inter-arrival time below 1~s & -- & -- & -- \\
+\bottomrule
+\end{tabularx}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize In \%, no training. Recall and precision for the rule's class; FAR: benign rows the rule fires on over benign rows. Rate features: implied speed, speed and vertical-rate consistency, turn rate. Missing inter-arrival times do not fire the flooding rule.}
+\end{table}

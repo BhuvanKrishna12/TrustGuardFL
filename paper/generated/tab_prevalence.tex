@@ -1,0 +1,31 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Results under Assumed Deployment Attack Prevalence (Full Feature Set)}
+\label{tab:prevalence}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrrr}
+\toprule
+& & \multicolumn{2}{c}{Test mix} & \multicolumn{2}{c}{$\rho=1\%$} & \multicolumn{2}{c}{$\rho=0.1\%$} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
+Model & $s$ & Macro F1 & Real alerts & Macro F1 & Real alerts & Macro F1 & Real alerts \\
+\midrule
+Fed.\ CNN & 0 & -- & -- & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- & -- & -- \\
+ & oracle & -- & -- & -- & -- & -- & -- \\
+\midrule
+Central CNN & 0 & -- & -- & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- & -- & -- \\
+ & oracle & -- & -- & -- & -- & -- & -- \\
+\midrule
+LightGBM & 0 & -- & -- & -- & -- & -- & -- \\
+ & 0.5 & -- & -- & -- & -- & -- & -- \\
+ & 1 & -- & -- & -- & -- & -- & -- \\
+ & oracle & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Test rows are reweighted (not resampled) so that attacks make up a share $\rho$ of traffic, the five attack classes keeping their test proportions; models are not retrained. Rows $s$: correction with the training-day prior, as a deployment would apply it. Oracle: correction at $s=1$ with the true deployment prior. Real alerts: share of rows flagged as any attack that are attacks. Recall and false alarm rate do not change under reweighting.}
+\end{table*}

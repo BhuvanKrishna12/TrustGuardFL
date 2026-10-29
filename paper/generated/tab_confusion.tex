@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Confusion Matrices at Full Correction ($s=1$, Full Feature Set)}
+\label{tab:confusion}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{lrrrrrrrrrrrr}
+\toprule
+& \multicolumn{6}{c}{Fed.\ CNN (predicted)} & \multicolumn{6}{c}{Central CNN (predicted)} \\
+\cmidrule(lr){2-7}\cmidrule(lr){8-13}
+Actual & Ben. & Flood & Ghost & GPS & Repl. & Vel. & Ben. & Flood & Ghost & GPS & Repl. & Vel. \\
+\midrule
+Benign & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Flooding & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Ghost aircraft & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+GPS spoof & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Replay & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+Velocity spoof & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Row-normalised (each row sums to 100\%), mean over \R{nseeds} seeds.}
+\end{table*}

@@ -1,0 +1,32 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Training Configuration}
+\label{tab:config}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Setting & Value \\
+\midrule
+Training sample & -- rows from -- raw rows; -- sampler, cap -- rows per (cell, class), budget --, seed 42 \\
+Train / validation & 80/20 per client; -- / -- rows \\
+Clients & -- region cells with $\geq$-- rows \\
+Seeds & -- (--): init, splits, shuffling, bagging \\
+CNN & Conv1d 32, 64 ch., $k=3$; -- params, -- bytes (--) \\
+Optimizer & Adam, lr $10^{-3}$, batch 512, balanced class weights \\
+Scaler & Standardization fitted on the pooled training sample \\
+FedAvg & -- rounds, -- local epochs, participation 1.0 \\
+Communication & -- in total (up and down), -- per round \\
+Central CNN & $\leq$-- epochs, early stop patience -- \\
+LightGBM & -- leaves, lr --, $\leq$-- trees, early stop -- rounds, subsample 0.8, colsample 0.9 \\
+CNN selection & Round or epoch with the best unweighted validation accuracy of the uncorrected prediction ($s=0$) \\
+LightGBM selection & Early stopping on class-weighted multi\_logloss of the validation rows \\
+Training cost (full set) & Fed.\ CNN -- steps, -- min; Central CNN -- steps, -- min; LightGBM -- iterations, -- min \\
+Prior correction & $s\in\{0,0.1,\ldots,1\}$, prior from all training-file rows \\
+Selection data & Training-day validation rows only; test days never used \\
+Software & Python --, PyTorch --, LightGBM --, scikit-learn --, pandas --, NumPy -- \\
+\bottomrule
+\end{tabularx}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Training cost: mean over seeds; steps are optimizer updates summed over clients.}
+\end{table}
