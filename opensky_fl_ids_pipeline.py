@@ -31,6 +31,19 @@ Pipeline versions (--pipeline-version, default v3):
             implied speed > MAX_PLAUSIBLE_SPEED_MPS but kept attack rows at
             the same speed. v3 drops nothing by implied speed and computes
             is_physically_implausible identically for every row.
+    mv -- MULTI-VARIANT output for the correction ablation: the v3 file
+          (same rows, same columns, same order, same values) plus the extra
+          columns MV_EXTRA_COLS, from which the v2 file and every mix of the
+          individual corrections can be rebuilt without reprocessing
+          (experiments/variants.py, tested by experiments/test_variants.py):
+            track_message_count_legacy   v2 value (whole-chunk count)
+            squawk_changed_legacy        v2 value (NaN counts as a change)
+            attack_type_legacy, label_legacy   v2 labels (flooding originals
+                                         labelled flooding)
+            legacy_filter_drop           True for the rows v2 removed with its
+                                         benign-only > 400 m/s filter
+          Removing the legacy_filter_drop rows and taking the *_legacy columns
+          gives the v2 file exactly.
 
 Output:
     <name>_labeled.csv  -- cleaned data + engineered features + attack labels
@@ -131,7 +144,11 @@ SESSION_BREAK_SECONDS = 3600
 
 # --pipeline-version choices. "v2" is the pre-revision behaviour and must stay
 # byte-for-byte reproducible; "v3" is the leakage-audited revision.
-PIPELINE_VERSIONS = ("v2", "v3")
+PIPELINE_VERSIONS = ("v2", "v3", "mv")
+
+# Extra columns of the multi-variant ("mv") output, written after the v3 columns.
+MV_EXTRA_COLS = ["track_message_count_legacy", "squawk_changed_legacy",
+                 "attack_type_legacy", "label_legacy", "legacy_filter_drop"]
 DEFAULT_PIPELINE_VERSION = "v3"
 
 
@@ -414,17 +431,23 @@ def add_tier_b_features(df: pd.DataFrame, region_baseline: pd.Series = None,
     # here to get per-receiver client IDs. For now, bucket by lat/lon grid
     # cell as a stand-in "virtual sensor region" for FL partitioning.
     df["region_cell"] = compute_region_cell(df["lat"], df["lon"])
-    if pipeline_version == "v2":
+    if pipeline_version in ("v2", "mv"):
         # v2: raw inequality -- every aircraft's first row (prev = NaN) and
         # every missing squawk compares as "changed".
         new_group = (df["icao24"] != df["icao24"].shift(1)).to_numpy(copy=True)
         new_group[0] = True
         prev_squawk = df["squawk"].shift(1).to_numpy(copy=True)
         prev_squawk[new_group] = np.nan
-        df["squawk_changed"] = pd.Series(prev_squawk, index=df.index) != df["squawk"]
+        v2_squawk_changed = pd.Series(prev_squawk, index=df.index) != df["squawk"]
+    if pipeline_version == "v2":
+        df["squawk_changed"] = v2_squawk_changed
     else:
         # v3: a change only when both codes are present and differ.
         df["squawk_changed"] = squawk_changed_v3(df)
+        if pipeline_version == "mv":
+            # v2 value, never refreshed after injection (as in v2): flooding
+            # duplicates copy it from their original, ghost rows keep theirs.
+            df["squawk_changed_legacy"] = v2_squawk_changed
 
     # region_avg_inter_arrival baseline: mean CLEAN (pre-injection)
     # inter_arrival_s per region over the whole chunk. It uses no labels or
@@ -483,6 +506,8 @@ def add_tier_c_features(df: pd.DataFrame,
         df["track_message_count"] = df["icao24"].map(df["icao24"].value_counts())
     else:
         df["track_message_count"] = causal_track_message_count(df)
+        if pipeline_version == "mv":
+            df["track_message_count_legacy"] = df["icao24"].map(df["icao24"].value_counts())
 
     return df
 
@@ -570,10 +595,16 @@ def apply_attack_to_subset(combined: pd.DataFrame, idx, attack_type: str, rng,
     # labelled. The slice still consumes its share of the permutation and
     # the RNG draws below happen in the same order as v2, so every other
     # attack slice (and the duplicates themselves) is identical to v2.
-    label_selected_rows = not (attack_type == "flooding" and pipeline_version == "v3")
+    label_selected_rows = not (attack_type == "flooding" and pipeline_version in ("v3", "mv"))
     if label_selected_rows:
         combined.loc[idx, "label"] = 1
         combined.loc[idx, "attack_type"] = attack_type
+    if pipeline_version == "mv":
+        # v2 labels of the same rows: every selected row is labelled, flooding
+        # originals included. The duplicates below are copies of the selected
+        # rows and so inherit label_legacy = 1 / "flooding", exactly as in v2.
+        combined.loc[idx, "label_legacy"] = 1
+        combined.loc[idx, "attack_type_legacy"] = attack_type
 
     new_rows = None
     if attack_type == "flooding":
@@ -596,7 +627,7 @@ def apply_attack_to_subset(combined: pd.DataFrame, idx, attack_type: str, rng,
             c["time"] = c["time"] + i * offsets[mask]
             copies.append(c)
         new_rows = pd.concat(copies, ignore_index=True) if copies else None
-        if pipeline_version == "v3" and new_rows is not None:
+        if pipeline_version in ("v3", "mv") and new_rows is not None:
             new_rows["label"] = 1
             new_rows["attack_type"] = attack_type
 
@@ -636,6 +667,14 @@ def _finalize_and_write(piece: pd.DataFrame, out_path: str, write_header: bool,
     piece["is_physically_implausible"] = (
         piece["implied_speed_mps"] > MAX_PLAUSIBLE_SPEED_MPS
     )
+    if pipeline_version == "mv":
+        # The rows the v2 filter below would remove (v2 labels, i.e. flooding
+        # originals are not benign there). Nothing is removed here. The v2
+        # filter is the very last step: features of the remaining rows are
+        # NOT recomputed after it, and track_message_count / the region
+        # baseline were computed before it, so a row mask reproduces it exactly.
+        piece["legacy_filter_drop"] = ((piece["label_legacy"] == 0)
+                                       & piece["is_physically_implausible"])
     if pipeline_version == "v2":
         # v2 (LEAKY, kept for reproducibility): drops BENIGN rows above the
         # speed ceiling but keeps ATTACK rows at the same speed, which makes
@@ -656,6 +695,11 @@ def _finalize_and_write(piece: pd.DataFrame, out_path: str, write_header: bool,
     # (and its fillna(0) also removes vertrate missingness on those rows).
     # It is excluded from the "core" feature set at training time.
     piece["is_climbing_or_descending"] = piece["vertrate"].abs() > CLIMB_DESCENT_VERTRATE_MPS
+
+    if pipeline_version == "mv":
+        # v3 columns first, in the v3 order, then the extra columns.
+        v3_cols = [c for c in piece.columns if c not in MV_EXTRA_COLS]
+        piece = piece[v3_cols + MV_EXTRA_COLS]
 
     n_rows = len(piece)
     n_attack = int(piece["label"].sum())
@@ -693,6 +737,9 @@ def process_chunk(paths: list, chunk_label: str, out_path: str, write_header: bo
 
     df["label"] = 0
     df["attack_type"] = "benign"
+    if pipeline_version == "mv":
+        df["label_legacy"] = 0
+        df["attack_type_legacy"] = "benign"
 
     rng = np.random.default_rng(seed)
     shuffled = rng.permutation(df.index.to_numpy())
@@ -733,7 +780,7 @@ def process_chunk(paths: list, chunk_label: str, out_path: str, write_header: bo
         subset = subset.sort_values(["icao24", "time"])
         subset = add_tier_a_features(subset)
         df.loc[subset.index, tier_a_cols] = subset[tier_a_cols].values
-        if pipeline_version == "v3":
+        if pipeline_version in ("v3", "mv"):
             # Same stage as v2 (post-injection recompute over the aircraft
             # touched by attacks), but the causal count depends on the ORDER
             # of an aircraft's messages, not just their total, so it is
@@ -746,7 +793,7 @@ def process_chunk(paths: list, chunk_label: str, out_path: str, write_header: bo
                 causal_track_message_count(subset).to_numpy())
             df.loc[subset.index, "squawk_changed"] = squawk_changed_v3(subset).to_numpy()
 
-    if gf_affected_icao and pipeline_version == "v2":
+    if gf_affected_icao and pipeline_version in ("v2", "mv"):
         # track_message_count only actually changes for ghost_aircraft
         # (new icao24s, essentially always singletons) and flooding
         # (duplicated rows inflate an existing icao24's count) -- recompute
@@ -754,9 +801,10 @@ def process_chunk(paths: list, chunk_label: str, out_path: str, write_header: bo
         # attack_type filter), since a single aircraft's rows can be split
         # across several different attack-type assignments and all of them
         # share the same true row count.
+        tmc_col = "track_message_count" if pipeline_version == "v2" else "track_message_count_legacy"
         gf_mask = df["icao24"].isin(gf_affected_icao)
         counts = df.loc[gf_mask, "icao24"].value_counts()
-        df.loc[gf_mask, "track_message_count"] = df.loc[gf_mask, "icao24"].map(counts)
+        df.loc[gf_mask, tmc_col] = df.loc[gf_mask, "icao24"].map(counts)
 
     gps_idx = assignments["gps_spoof"]
     if len(gps_idx) > 0:
@@ -857,7 +905,9 @@ if __name__ == "__main__":
                     default=DEFAULT_PIPELINE_VERSION,
                     help="v2 reproduces the pre-revision pipeline byte-for-byte; "
                          "v3 (default) applies the leakage-audit fixes described in "
-                         "PIPELINE_V3_CHANGES.md.")
+                         "PIPELINE_V3_CHANGES.md; mv writes the v3 file plus the extra "
+                         "columns needed to rebuild v2 and every single-correction mix "
+                         "(see experiments/reprocess_mv.py for the resumable day driver).")
     args = p.parse_args()
 
     main(args.inputs, chunk_files=args.chunk_files, rate=args.rate,
