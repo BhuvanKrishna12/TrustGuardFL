@@ -85,7 +85,11 @@ step_1() {  # setup + self-test
   fi
   if [ "${REV2_SKIP_SMOKE:-0}" != "1" ]; then
     rm -rf "$W/smoke"
-    if bash "$CODE/experiments/smoke_test.sh" "$W/smoke" > "$LOGS/1_smoke.log" 2>&1 \
+    # Run the self-test with the stop flag pointed at an unused path, so a `stop`
+    # requested during step 1 does not interrupt the (short) self-test and look like
+    # a failure. The worker still honours the stop cleanly once step 1 finishes, and
+    # the self-test's own stop/resume checks use their own separate flags.
+    if REV2_STOP_FLAG="$W/smoke/.ignore_stop" bash "$CODE/experiments/smoke_test.sh" "$W/smoke" > "$LOGS/1_smoke.log" 2>&1 \
          && grep -q "SMOKE TEST OK" "$LOGS/1_smoke.log"; then
       rm -rf "$W/smoke"
     else

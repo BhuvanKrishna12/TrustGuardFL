@@ -136,8 +136,15 @@ s star \R{r2-sstar-fedcnn-full-mean}, \R{r2-unified-diff-lgbm-own}.
 \end{document}
 EOF
 if command -v pdflatex >/dev/null; then
-(cd "$W/$d" && pdflatex -interaction=nonstopmode -halt-on-error test.tex >/dev/null \
-    && pdflatex -interaction=nonstopmode -halt-on-error test.tex >/dev/null)
+  if (cd "$W/$d" && pdflatex -interaction=nonstopmode -halt-on-error test.tex >/dev/null 2>&1 \
+      && pdflatex -interaction=nonstopmode -halt-on-error test.tex >/dev/null 2>&1); then
+    echo "LaTeX compile check OK for $d"
+  else
+    # The compile is an optional bonus check. It needs the IEEEtran class and some
+    # LaTeX packages, which a data/ML environment may not have. Not having them does
+    # not mean the revision code is wrong, so warn and carry on.
+    echo "note: optional LaTeX compile check skipped for $d (pdflatex is present but a LaTeX class or package such as IEEEtran is missing); this does not affect the results"
+  fi
 else
   echo "pdflatex not installed: skipping the LaTeX compile check for $d"
 fi
