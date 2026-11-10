@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{LightGBM Feature Importance (Gain Share)}
+\label{tab:importance}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lrr}
+\toprule
+Feature & Full set & Core set \\
+\midrule
+implied\_speed\_mps & 27.1{\,}$\pm${\,}1.9 & 31.4{\,}$\pm${\,}3.8 \\
+speed\_consistency\_delta & 8.1{\,}$\pm${\,}1.2 & 11.3{\,}$\pm${\,}3.7 \\
+vrate\_consistency\_delta & 14.6{\,}$\pm${\,}0.7 & 13.1{\,}$\pm${\,}2.9 \\
+inter\_arrival\_s & 40.8{\,}$\pm${\,}3.2 & 36.7{\,}$\pm${\,}5.4 \\
+turn\_rate\_deg\_s & 0.8{\,}$\pm${\,}0.1 & 1.5{\,}$\pm${\,}0.7 \\
+track\_message\_count & 5.0{\,}$\pm${\,}0.7 & n/a \\
+is\_physically\_implausible & 1.0{\,}$\pm${\,}0.8 & n/a \\
+squawk\_changed & 0.1{\,}$\pm${\,}0.0 & n/a \\
+icao24\_valid\_format & 0.0{\,}$\pm${\,}0.0 & n/a \\
+is\_stale & 0.9{\,}$\pm${\,}0.2 & 1.9{\,}$\pm${\,}0.8 \\
+region\_avg\_inter\_arrival & 0.6{\,}$\pm${\,}0.2 & 4.2{\,}$\pm${\,}4.5 \\
+is\_low\_coverage\_region & 0.0{\,}$\pm${\,}0.0 & n/a \\
+is\_climbing\_or\_descending & 1.2{\,}$\pm${\,}0.4 & n/a \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Share of total split gain; n/a: feature not in the core set. Correlated features can substitute for each other, so a low share does not rule out leakage.}
+\end{table}

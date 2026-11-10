@@ -1,0 +1,32 @@
+\begin{table}[t]
+\centering
+\footnotesize
+\caption{Training Configuration}
+\label{tab:config}
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Setting & Value \\
+\midrule
+Training sample & 4{,}888{,}852 rows from 203{,}214{,}789 raw rows; uniform per (region, class) sampler, cap 7{,}936 rows per (cell, class), budget 10{,}000{,}000, seed 42 \\
+Train / validation & 80/20 per client; 3{,}898{,}099 / 974{,}634 rows \\
+Clients & 161 region cells with $\geq$3{,}000 rows \\
+Seeds & 5 (1, 2, 3, 4, 5): init, splits, shuffling, bagging \\
+CNN & Conv1d 32, 64 ch., $k=3$; 11{,}334 params, 45{,}336 bytes (45.3~kB) \\
+Optimizer & Adam, lr $10^{-3}$, batch 512, balanced class weights \\
+Scaler & Standardization fitted on the pooled training sample \\
+FedAvg & 50 rounds, 2 local epochs, participation 1.0 \\
+Communication & 729.9~MB in total (up and down), 14.60~MB per round \\
+Central CNN & $\leq$20 epochs, early stop patience 3 \\
+LightGBM & 127 leaves, lr 0.1, $\leq$1{,}000 trees, early stop 30 rounds, subsample 0.8, colsample 0.9 \\
+CNN selection & Round or epoch with the best unweighted validation accuracy of the uncorrected prediction ($s=0$) \\
+LightGBM selection & Early stopping on class-weighted multi\_logloss of the validation rows \\
+Training cost (full set) & Fed.\ CNN 769{,}900 steps, 39.3{\,}$\pm${\,}0.2 min; Central CNN 121{,}824 steps, 2.6{\,}$\pm${\,}0.9 min; LightGBM 62 iterations, 1.0{\,}$\pm${\,}0.1 min \\
+Prior correction & $s\in\{0,0.1,\ldots,1\}$, prior from all training-file rows \\
+Selection data & Training-day validation rows only; test days never used \\
+Software & Python 3.12.3, PyTorch 2.14.1+cu126, LightGBM 4.7.0, scikit-learn 1.9.1, pandas 3.0.5, NumPy 2.5.3 \\
+\bottomrule
+\end{tabularx}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Training cost: mean over seeds; steps are optimizer updates summed over clients.}
+\end{table}

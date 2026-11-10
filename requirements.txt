@@ -1,0 +1,16 @@
+# Pinned to the versions the revision harness was tested with (experiments/smoke_test.sh).
+# Core: pipeline, federated simulation, experiments, aggregation
+numpy==2.5.3
+pandas==3.0.5
+scikit-learn==1.9.1
+scipy==1.18.1
+joblib==1.6.0
+lightgbm==4.7.0
+matplotlib==3.11.2
+# PyTorch: tested with 2.14.1 (CUDA 13.0 build). On the laptop install the CUDA wheel
+# that matches the driver, e.g. pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
+torch==2.14.1
+# Optional
+# pyarrow           # training-sample cache as parquet instead of pickle
+# fastapi==0.143.0, uvicorn==0.53.0, pydantic==2.13.5   # inference_server.py demo only
+# flwr              # federated_simulation_flower.py only (not used by the paper's runs)

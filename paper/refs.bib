@@ -1,0 +1,435 @@
+% refs.bib for AeroGuard (federated IDS on ADS-B)
+% Every entry was checked on a page that was actually opened (URLs in citation_notes.md, Section 6).
+% Fields that could not be confirmed on an opened page are omitted rather than guessed; such gaps are
+% noted in a comment under the entry. Verification date: 2026-10-27.
+
+% ===========================================================================
+% Keys cited in main.tex
+% ===========================================================================
+
+% --- ADS-B background and security ----------------------------------------
+
+@article{strohmeier2014,
+  author    = {Strohmeier, Martin and Sch{\"a}fer, Matthias and Lenders, Vincent and Martinovic, Ivan},
+  title     = {Realities and Challenges of {NextGen} Air Traffic Management: The Case of {ADS-B}},
+  journal   = {IEEE Communications Magazine},
+  volume    = {52},
+  number    = {5},
+  pages     = {111--118},
+  year      = {2014}
+}
+% DOI not shown on the Oxford or ORA pages; add it from IEEE Xplore before submission.
+
+@article{strohmeier2015,
+  author    = {Strohmeier, Martin and Lenders, Vincent and Martinovic, Ivan},
+  title     = {On the Security of the Automatic Dependent Surveillance-Broadcast Protocol},
+  journal   = {IEEE Communications Surveys \& Tutorials},
+  volume    = {17},
+  number    = {2},
+  pages     = {1066--1087},
+  year      = {2015},
+  doi       = {10.1109/COMST.2014.2365951}
+}
+
+@inproceedings{costin2012,
+  author    = {Costin, Andrei and Francillon, Aur{\'e}lien},
+  title     = {Ghost in the Air(Traffic): On Insecurity of {ADS-B} Protocol and Practical Attacks on {ADS-B} Devices},
+  booktitle = {Black Hat USA},
+  address   = {Las Vegas, NV, USA},
+  month     = jul,
+  year      = {2012},
+  url       = {https://www.eurecom.fr/publication/3788}
+}
+% Industry conference paper/talk, not a peer-reviewed venue. Keep it paired with schafer2013 (peer-reviewed).
+
+@inproceedings{schafer2013,
+  author    = {Sch{\"a}fer, Matthias and Lenders, Vincent and Martinovic, Ivan},
+  title     = {Experimental Analysis of Attacks on Next Generation Air Traffic Communication},
+  booktitle = {Applied Cryptography and Network Security (ACNS 2013)},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {7954},
+  pages     = {253--271},
+  publisher = {Springer},
+  year      = {2013},
+  doi       = {10.1007/978-3-642-38980-1_16}
+}
+
+@inproceedings{schafer2014,
+  author    = {Sch{\"a}fer, Matthias and Strohmeier, Martin and Lenders, Vincent and Martinovic, Ivan and Wilhelm, Matthias},
+  title     = {Bringing Up {OpenSky}: A Large-scale {ADS-B} Sensor Network for Research},
+  booktitle = {Proceedings of the 13th International Symposium on Information Processing in Sensor Networks (IPSN '14)},
+  address   = {Berlin, Germany},
+  pages     = {83--94},
+  publisher = {IEEE Press},
+  year      = {2014},
+  doi       = {10.1109/IPSN.2014.6846743}
+}
+
+% --- Federated learning ----------------------------------------------------
+
+@inproceedings{mcmahan2017,
+  author    = {McMahan, Brendan and Moore, Eider and Ramage, Daniel and Hampson, Seth and Aguera y Arcas, Blaise},
+  title     = {Communication-Efficient Learning of Deep Networks from Decentralized Data},
+  booktitle = {Proceedings of the 20th International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  editor    = {Singh, Aarti and Zhu, Jerry},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {54},
+  pages     = {1273--1282},
+  publisher = {PMLR},
+  year      = {2017},
+  url       = {https://proceedings.mlr.press/v54/mcmahan17a.html}
+}
+
+@article{yang2019,
+  author    = {Yang, Qiang and Liu, Yang and Chen, Tianjian and Tong, Yongxin},
+  title     = {Federated Machine Learning: Concept and Applications},
+  journal   = {ACM Transactions on Intelligent Systems and Technology},
+  volume    = {10},
+  number    = {2},
+  pages     = {1--19},
+  year      = {2019},
+  doi       = {10.1145/3298981}
+}
+
+@misc{zhao2018,
+  author    = {Zhao, Yue and Li, Meng and Lai, Liangzhen and Suda, Naveen and Civin, Damon and Chandra, Vikas},
+  title     = {Federated Learning with Non-{IID} Data},
+  year      = {2018},
+  eprint    = {1806.00582},
+  archivePrefix = {arXiv},
+  doi       = {10.48550/arXiv.1806.00582}
+}
+% arXiv preprint only; no journal-ref on the arXiv page.
+
+@inproceedings{li2020fedprox,
+  author    = {Li, Tian and Sahu, Anit Kumar and Zaheer, Manzil and Sanjabi, Maziar and Talwalkar, Ameet and Smith, Virginia},
+  title     = {Federated Optimization in Heterogeneous Networks},
+  booktitle = {Proceedings of Machine Learning and Systems (MLSys)},
+  pages     = {429--450},
+  year      = {2020}
+}
+% Proceedings volume number not given in the MLSys metadata; omitted.
+
+@inproceedings{zhu2019,
+  author    = {Zhu, Ligeng and Liu, Zhijian and Han, Song},
+  title     = {Deep Leakage from Gradients},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS 2019)},
+  pages     = {14774--14784},
+  year      = {2019}
+}
+
+@inproceedings{bonawitz2017,
+  author    = {Bonawitz, Keith and Ivanov, Vladimir and Kreuter, Ben and Marcedone, Antonio and McMahan, H. Brendan and Patel, Sarvar and Ramage, Daniel and Segal, Aaron and Seth, Karn},
+  title     = {Practical Secure Aggregation for Privacy-Preserving Machine Learning},
+  booktitle = {Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {1175--1191},
+  publisher = {ACM},
+  year      = {2017}
+}
+% DOI not displayed on any opened page (Google Research, IACR ePrint 2017/281, BibBase); add from the ACM DL.
+
+@inproceedings{abadi2016,
+  author    = {Abadi, Mart{\'\i}n and Chu, Andy and Goodfellow, Ian and McMahan, H. Brendan and Mironov, Ilya and Talwar, Kunal and Zhang, Li},
+  title     = {Deep Learning with Differential Privacy},
+  booktitle = {Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {308--318},
+  publisher = {ACM},
+  year      = {2016},
+  doi       = {10.1145/2976749.2978318}
+}
+
+% --- Synthetic data, leakage, prior correction ----------------------------
+
+@article{chawla2002,
+  author    = {Chawla, N. V. and Bowyer, K. W. and Hall, L. O. and Kegelmeyer, W. P.},
+  title     = {{SMOTE}: Synthetic Minority Over-sampling Technique},
+  journal   = {Journal of Artificial Intelligence Research},
+  volume    = {16},
+  pages     = {321--357},
+  year      = {2002},
+  doi       = {10.1613/jair.953}
+}
+% JAIR page shows initials only.
+
+@inproceedings{goodfellow2014,
+  author    = {Goodfellow, Ian and Pouget-Abadie, Jean and Mirza, Mehdi and Xu, Bing and Warde-Farley, David and Ozair, Sherjil and Courville, Aaron and Bengio, Yoshua},
+  title     = {Generative Adversarial Nets},
+  booktitle = {Advances in Neural Information Processing Systems (NIPS 2014)},
+  pages     = {2672--2680},
+  year      = {2014}
+}
+
+@article{kapoor2023,
+  author    = {Kapoor, Sayash and Narayanan, Arvind},
+  title     = {Leakage and the Reproducibility Crisis in Machine-Learning-Based Science},
+  journal   = {Patterns},
+  volume    = {4},
+  number    = {9},
+  pages     = {100804},
+  year      = {2023},
+  doi       = {10.1016/j.patter.2023.100804}
+}
+
+@inproceedings{arp2022,
+  author    = {Arp, Daniel and Quiring, Erwin and Pendlebury, Feargus and Warnecke, Alexander and Pierazzi, Fabio and Wressnegger, Christian and Cavallaro, Lorenzo and Rieck, Konrad},
+  title     = {Dos and Don'ts of Machine Learning in Computer Security},
+  booktitle = {31st USENIX Security Symposium (USENIX Security 22)},
+  address   = {Boston, MA},
+  pages     = {3971--3988},
+  publisher = {USENIX Association},
+  year      = {2022},
+  isbn      = {978-1-939133-31-1}
+}
+
+@article{saerens2002,
+  author    = {Saerens, Marco and Latinne, Patrice and Decaestecker, Christine},
+  title     = {Adjusting the Outputs of a Classifier to New a Priori Probabilities: A Simple Procedure},
+  journal   = {Neural Computation},
+  volume    = {14},
+  pages     = {21--41},
+  year      = {2002},
+  doi       = {10.1162/089976602753284446}
+}
+
+@inproceedings{elkan2001,
+  author    = {Elkan, Charles},
+  title     = {The Foundations of Cost-Sensitive Learning},
+  booktitle = {Proceedings of the International Joint Conference on Artificial Intelligence (IJCAI)},
+  pages     = {973--978},
+  year      = {2001}
+}
+
+% --- ADS-B attack-data precedents and baselines ----------------------------
+
+@article{li2020,
+  author    = {Li, Tengyao and Wang, Buhong and Shang, Fute and Tian, Jiwei and Cao, Kunrui},
+  title     = {Threat Model and Construction Strategy on {ADS-B} Attack Data},
+  journal   = {IET Information Security},
+  volume    = {14},
+  number    = {5},
+  pages     = {542--552},
+  year      = {2020},
+  doi       = {10.1049/iet-ifs.2018.5635}
+}
+% ResearchGate metadata says 14(6) but the article header it displays says Vol. 14, Iss. 5. Issue 5 retained.
+
+@article{wang2020,
+  author    = {Wang, J. and Zou, Y. and Ding, J.},
+  title     = {{ADS-B} Spoofing Attack Detection Method Based on {LSTM}},
+  journal   = {EURASIP Journal on Wireless Communications and Networking},
+  volume    = {2020},
+  pages     = {160},
+  year      = {2020},
+  doi       = {10.1186/s13638-020-01756-8}
+}
+% Publisher page gives initials only.
+
+@inproceedings{ke2017,
+  author    = {Ke, Guolin and Meng, Qi and Finley, Thomas and Wang, Taifeng and Chen, Wei and Ma, Weidong and Ye, Qiwei and Liu, Tie-Yan},
+  title     = {{LightGBM}: A Highly Efficient Gradient Boosting Decision Tree},
+  booktitle = {Advances in Neural Information Processing Systems (NIPS 2017)},
+  pages     = {3146--3154},
+  year      = {2017}
+}
+
+@inproceedings{ying2019,
+  author    = {Ying, Xuhang and Mazer, Joanna and Bernieri, Giuseppe and Conti, Mauro and Bushnell, Linda and Poovendran, Radha},
+  title     = {Detecting {ADS-B} Spoofing Attacks Using Deep Neural Networks},
+  booktitle = {2019 IEEE Conference on Communications and Network Security (CNS)},
+  pages     = {187--195},
+  year      = {2019},
+  doi       = {10.1109/CNS.2019.8802732}
+}
+% Peer-reviewed version of arXiv:1904.09969.
+
+@inproceedings{ngamboe2025,
+  author    = {Ngambo{\'e}, Mika{\"e}la and Marrocco, Jean-Simon and Ouattara, Jean-Yves and Fernandez, Jos{\'e} M. and Nicolescu, Gabriela},
+  title     = {New Machine Learning Approaches for Intrusion Detection in {ADS-B}},
+  booktitle = {44th Digital Avionics Systems Conference (DASC 2025)},
+  address   = {Montreal, QC, Canada},
+  month     = sep,
+  year      = {2025},
+  note      = {Also arXiv:2510.08333}
+}
+% Polytechnique Montreal repository lists the DASC 2025 conference paper (10 pages) without DOI or page range.
+% No IEEE Xplore record was found. Add pages and DOI when it appears.
+
+% ===========================================================================
+% ===========================================================================
+
+% --- Federated learning on ADS-B / aviation (decides the research gap) ----
+
+@misc{khan2022flguard,
+  author    = {Khan, Suleman and Braeken, An and Kumar, Pardeep and Gurtov, Andrei},
+  title     = {{POSTER}: {FL-Guard}: A Federated Learning Based Ground-Air Secure Communication Model for Future Aviation Network},
+  howpublished = {Poster, Network and Distributed System Security Symposium (NDSS)},
+  year      = {2022},
+  url       = {https://www.ndss-symposium.org/wp-content/uploads/NDSS2022Poster_paper_26.pdf}
+}
+% The PDF's ACM template placeholders read 2017; the NDSS 2022 poster URL and ACM reference line give 2022.
+
+% --- ADS-B regulation and data provenance ---------------------------------
+
+@misc{faa91225,
+  author    = {{U.S. Federal Aviation Administration}},
+  title     = {14 {CFR} Section 91.225: Automatic Dependent Surveillance-Broadcast ({ADS-B}) Out Equipment and Use},
+  howpublished = {Code of Federal Regulations, Title 14},
+  year      = {2010},
+  note      = {Final rule published 2010; equipage required from 1 January 2020. Accessed 27 October 2026},
+  url       = {https://www.law.cornell.edu/cfr/text/14/91.225}
+}
+
+@article{strohmeier2021,
+  author    = {Strohmeier, Martin and Olive, Xavier and L{\"u}bbe, Jannis and Sch{\"a}fer, Matthias and Lenders, Vincent},
+  title     = {Crowdsourced Air Traffic Data from the {OpenSky} Network 2019--2020},
+  journal   = {Earth System Science Data},
+  volume    = {13},
+  number    = {2},
+  pages     = {357--366},
+  year      = {2021},
+  doi       = {10.5194/essd-13-357-2021}
+}
+% Describes a derived flight-level dataset, not the weekly state-vector files. Do not cite it for the Monday files.
+
+@article{ahmed2026survey,
+  author    = {Ahmed, Waqas and Masood, Ammar and Manzoor, Jawad},
+  title     = {Towards Secure Air Traffic Surveillance: A Survey on {ADS-B} Threats, Existing Solutions, and Future Research},
+  journal   = {IEEE Open Journal of the Computer Society},
+  year      = {2026},
+  doi       = {10.1109/OJCS.2026.3651384}
+}
+% Early access: volume and pages not yet shown.
+
+@article{ngamboe2025cabba,
+  author    = {Ngamboe Mvogo, M. S. and Niu, X. and Joly, B. and Biegler, S. P. and Berthier, P. and Benito, R. and Rice, G. and Fernandez, J. M. and Nicolescu, G.},
+  title     = {{CABBA}: Compatible Authenticated Bandwidth-efficient Broadcast protocol for {ADS-B}},
+  journal   = {International Journal of Critical Infrastructure Protection},
+  volume    = {48},
+  pages     = {100728},
+  year      = {2025}
+}
+% Repository gives initials only and no DOI; add the DOI from the Elsevier page.
+
+% --- ADS-B ML/DL detectors (centralized) ---------------------------------
+
+@article{habler2018,
+  author    = {Habler, Edan and Shabtai, Asaf},
+  title     = {Using {LSTM} Encoder-Decoder Algorithm for Detecting Anomalous {ADS-B} Messages},
+  journal   = {Computers \& Security},
+  volume    = {78},
+  pages     = {155--173},
+  year      = {2018}
+}
+% DOI not shown on the opened BGU page; add from ScienceDirect.
+
+@article{fried2021,
+  author    = {Fried, Asaf and Last, Mark},
+  title     = {Facing Airborne Attacks on {ADS-B} Data with Autoencoders},
+  journal   = {Computers \& Security},
+  volume    = {109},
+  pages     = {102405},
+  year      = {2021},
+  doi       = {10.1016/j.cose.2021.102405}
+}
+
+@article{li2019ijcip,
+  author    = {Li, Tengyao and Wang, Buhong},
+  title     = {Sequential Collaborative Detection Strategy on {ADS-B} Data Attack},
+  journal   = {International Journal of Critical Infrastructure Protection},
+  volume    = {24},
+  pages     = {78--99},
+  year      = {2019},
+  doi       = {10.1016/j.ijcip.2018.11.003}
+}
+
+@inproceedings{ouldslimane2022,
+  author    = {Ould Slimane, Hadjar and Benouadah, Selma and Al Shamaileh, Khair and Devabhaktuni, Vijaya Kumar and Kaabouch, Naima},
+  title     = {{ADS-B} Message Injection Attack on {UAVs}: Assessment of {SVM}-based Detection Techniques},
+  booktitle = {2022 IEEE International Conference on Electro Information Technology (eIT)},
+  year      = {2022},
+  doi       = {10.1109/eIT53891.2022.9813819}
+}
+% Page range not shown on the opened page.
+
+@inproceedings{khoei2024,
+  author    = {Talaei Khoei, Tala and Ould Slimane, Hadjar and Al Shamaileh, Khair and Devabhaktuni, Vijaya Kumar and Kaabouch, Naima},
+  title     = {Detecting Injection Attacks in {ADS-B} Devices Using {RNN}-Based Models},
+  booktitle = {2024 Integrated Communications, Navigation and Surveillance Conference (ICNS)},
+  year      = {2024},
+  doi       = {10.1109/ICNS60906.2024.10550816}
+}
+
+@article{ahmed2025,
+  author    = {Ahmed, Waqas and Masood, Ammar and Manzoor, Jawad and Akleylek, Sedat},
+  title     = {Automatic Dependent Surveillance-Broadcast ({ADS-B}) Anomalous Messages and Attack Type Detection: Deep Learning-Based Architecture},
+  journal   = {PeerJ Computer Science},
+  volume    = {11},
+  pages     = {e2886},
+  year      = {2025},
+  doi       = {10.7717/peerj-cs.2886}
+}
+
+@article{cevik2025,
+  author    = {{\c{C}}evik, Nur{\c{s}}ah and Akleylek, Sedat},
+  title     = {Anomaly Detection System for {ADS-B} Data: Attack Vectors and Machine Learning Models},
+  journal   = {Internet of Things},
+  volume    = {29},
+  pages     = {101416},
+  year      = {2025},
+  doi       = {10.1016/j.iot.2024.101416}
+}
+
+% --- Federated IDS in other domains ---------------------------------------
+
+@article{khraisat2024,
+  author    = {Khraisat, Ansam and Alazab, Ammar and Singh, Sarabjot and Jan, Tony and Gomez, Alfredo},
+  title     = {Survey on Federated Learning for Intrusion Detection System: Concept, Architectures, Aggregation Strategies, Challenges, and Future Directions},
+  journal   = {ACM Computing Surveys},
+  volume    = {57},
+  number    = {1},
+  pages     = {7},
+  year      = {2024},
+  doi       = {10.1145/3687124}
+}
+
+@inproceedings{nguyen2019diot,
+  author    = {Nguyen, Thien Duc and Marchal, Samuel and Miettinen, Markus and Fereidooni, Hossein and Asokan, N. and Sadeghi, Ahmad-Reza},
+  title     = {{D{\"I}oT}: A Federated Self-learning Anomaly Detection System for {IoT}},
+  booktitle = {39th IEEE International Conference on Distributed Computing Systems (ICDCS)},
+  year      = {2019}
+}
+% Pages and DOI not shown on the opened pages (TU Darmstadt repository, arXiv:1804.07474). Add from IEEE Xplore.
+
+@article{ruzafa2023,
+  author    = {Ruzafa-Alcazar, P. and Fernandez-Saura, P. and Marmol-Campos, E. and Gonzalez-Vidal, A. and Hernandez-Ramos, J. L. and Bernal-Bernabe, J. and Skarmeta, A. F.},
+  title     = {Intrusion Detection Based on Privacy-Preserving Federated Learning for the Industrial {IoT}},
+  journal   = {IEEE Transactions on Industrial Informatics},
+  volume    = {19},
+  number    = {2},
+  pages     = {1145--1154},
+  year      = {2023},
+  doi       = {10.1109/TII.2021.3126728}
+}
+
+@article{abdelbasset2022,
+  author    = {Abdel-Basset, Mohamed and Moustafa, Nour and Hawash, Hossam and Razzak, Imran and Sallam, Karam M. and Elkomy, Osama M.},
+  title     = {Federated Intrusion Detection in Blockchain-Based Smart Transportation Systems},
+  journal   = {IEEE Transactions on Intelligent Transportation Systems},
+  volume    = {23},
+  number    = {3},
+  pages     = {2523--2537},
+  year      = {2022},
+  doi       = {10.1109/TITS.2021.3119968}
+}
+
+@article{kesici2024,
+  author    = {Kesici, Mert and Pal, Bikash and Yang, Guangya},
+  title     = {Detection of False Data Injection Attacks in Distribution Networks: A Vertical Federated Learning Approach},
+  journal   = {IEEE Transactions on Smart Grid},
+  volume    = {15},
+  number    = {6},
+  pages     = {5952--5964},
+  year      = {2024},
+  doi       = {10.1109/TSG.2024.3399396}
+}
+% Vertical (not horizontal) federation; cite as a smart-grid FL detector and note the difference.

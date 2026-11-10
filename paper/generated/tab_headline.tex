@@ -1,0 +1,26 @@
+\begin{table}[t]
+\centering
+\scriptsize
+\caption{Headline Results on the Held-Out Days (Full Feature Set)}
+\label{tab:headline}
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{llrrrr}
+\toprule
+Model & $s$ & Acc. & FAR & Atk.\ rec. & Macro F1 \\
+\midrule
+Fed.\ CNN & 0 & 92.2{\,}$\pm${\,}0.1 & 8.3{\,}$\pm${\,}0.2 & 89.2{\,}$\pm${\,}0.1 & 73.9{\,}$\pm${\,}0.2 \\
+ & 0.5 & 94.6{\,}$\pm${\,}0.1 & 4.9{\,}$\pm${\,}0.1 & 85.2{\,}$\pm${\,}0.3 & 78.1{\,}$\pm${\,}0.2 \\
+ & 1 & 95.4{\,}$\pm${\,}0.1 & 1.7{\,}$\pm${\,}0.1 & 64.7{\,}$\pm${\,}0.4 & 70.7{\,}$\pm${\,}0.3 \\
+\midrule
+Central CNN & 0 & 92.0{\,}$\pm${\,}0.4 & 9.0{\,}$\pm${\,}0.5 & 93.0{\,}$\pm${\,}0.5 & 74.9{\,}$\pm${\,}0.9 \\
+ & 0.5 & 94.7{\,}$\pm${\,}0.1 & 5.4{\,}$\pm${\,}0.2 & 89.6{\,}$\pm${\,}0.7 & 79.9{\,}$\pm${\,}0.5 \\
+ & 1 & 95.9{\,}$\pm${\,}0.1 & 2.4{\,}$\pm${\,}0.2 & 75.9{\,}$\pm${\,}1.9 & 78.7{\,}$\pm${\,}0.7 \\
+\midrule
+LightGBM & 0 & 91.9{\,}$\pm${\,}0.0 & 9.3{\,}$\pm${\,}0.0 & 95.1{\,}$\pm${\,}0.0 & 77.7{\,}$\pm${\,}0.1 \\
+ & 0.5 & 95.1{\,}$\pm${\,}0.0 & 5.2{\,}$\pm${\,}0.0 & 92.9{\,}$\pm${\,}0.0 & 82.2{\,}$\pm${\,}0.0 \\
+ & 1 & 96.3{\,}$\pm${\,}0.0 & 2.7{\,}$\pm${\,}0.0 & 83.7{\,}$\pm${\,}0.1 & 82.5{\,}$\pm${\,}0.0 \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. FAR: false alarm rate; Atk.\ rec.: average recall over the five attack classes; $s$: correction strength.}
+\end{table}
