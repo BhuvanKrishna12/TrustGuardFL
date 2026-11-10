@@ -61,6 +61,9 @@ def eq(a, b, cols, what):
     assert len(a) == len(b), f"{what}: {len(a)} vs {len(b)} rows"
     for c in cols:
         x, y = a[c].reset_index(drop=True), b[c].reset_index(drop=True)
+        if c == "icao24":       # the revision-2 samplers store the address as an integer
+            x = pd.Series(sampling.icao_to_u32(x)) if not pd.api.types.is_integer_dtype(x) else x
+            y = pd.Series(sampling.icao_to_u32(y)) if not pd.api.types.is_integer_dtype(y) else y
         if pd.api.types.is_float_dtype(x) or pd.api.types.is_float_dtype(y):
             ok = np.isclose(x.to_numpy(dtype="float64"), y.to_numpy(dtype="float64"),
                             rtol=0, atol=0, equal_nan=True)
@@ -110,6 +113,7 @@ def main():
     assert want.sort_index().to_dict() == got.sort_index().to_dict(), "legacy view bucket sizes"
     assert (want == cap).sum() > 3, "no capped bucket in the test data"
     key = ["icao24", "time", "lastposupdate", "attack_type"]
+    v2["icao24"] = sampling.icao_to_u32(v2["icao24"])
     m = leg.merge(v2.drop_duplicates(key), on=key, how="left", suffixes=("", "_v2"), indicator=True)
     assert (m["_merge"] == "both").all(), "legacy view has rows that are not in the v2 files"
     for c in ("track_message_count", "squawk_changed", "implied_speed_mps", "is_physically_implausible"):

@@ -11,6 +11,8 @@ inputs of the paper into --tex-dir (default paper/generated):
   tab_importance.tex tab_v2v3.tex
   tab_audit.tex        copied from leakage_audit.py output with --audit-table
                        (an existing file is never overwritten otherwise)
+  tab_ablation_corrections.tex tab_unified_pipeline.tex tab_selected_s.tex
+  tab_baselines.tex tab_prauc.tex   revision 2 (--rev2-root; see aggregate_revision2.py)
   fig_sweep.tex fig_clients.tex
   sweep_<model>_<fs>.dat clientsizes.dat   (pgfplots data)
 
@@ -36,6 +38,8 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
 
 MODELS = [("fed_cnn", "fedcnn", "Fed.\\ CNN"),
           ("central_cnn", "centralcnn", "Central CNN"),
@@ -907,6 +911,10 @@ def main():
     ap.add_argument("--dat-prefix", default="generated/",
                     help="Path of --tex-dir relative to the main .tex file, used for .dat files")
     ap.add_argument("--placeholder", action="store_true")
+    ap.add_argument("--rev2-root", default=None,
+                    help="revision-2 runs folder (holding main/, var_*/, ls_*/, fedprox_*/); adds "
+                         "tab_ablation_corrections, tab_unified_pipeline, tab_selected_s, "
+                         "tab_baselines, tab_prauc and the r2-* macros")
     ap.add_argument("--audit-table", default=None,
                     help="table written by leakage_audit.py (copied as tab_audit.tex)")
     args = ap.parse_args()
@@ -926,6 +934,10 @@ def main():
                         print(f"  {model:<12} {fset:<5} {n} seed(s)")
     M, cs, ntdays = build_macros(res, v2, args.placeholder)
     ndays = max(NDAYS_MIN, len(res.days))
+    import aggregate_revision2
+    r2_files, r2_macros = aggregate_revision2.build(args.rev2_root,
+                                                    args.placeholder or not args.rev2_root)
+    M.update(r2_macros)
     write_macros(M, os.path.join(args.tex_dir, "results_macros.tex"))
     files = {
         "tab_headline.tex": tab_headline(M),
@@ -945,6 +957,7 @@ def main():
         "fig_sweep.tex": fig_sweep(args.dat_prefix),
         "fig_clients.tex": fig_clients(args.dat_prefix),
     }
+    files.update(r2_files)
     audit_out = os.path.join(args.tex_dir, "tab_audit.tex")
     if args.audit_table:
         files["tab_audit.tex"] = audit_from_file(args.audit_table)

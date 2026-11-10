@@ -252,7 +252,7 @@ def _slim_sample(df):
     """Dtypes that keep the cached sample small."""
     df = df.reset_index(drop=True)
     for c in ("attack_type", "attack_type_legacy", "region_cell", "icao24"):
-        if c in df.columns:
+        if c in df.columns and not pd.api.types.is_integer_dtype(df[c]):
             df[c] = df[c].astype(str).astype("category")
     return df
 
@@ -1270,6 +1270,9 @@ def parse_args(argv=None):
                     help="When this file exists, stop after the current round / epoch / run "
                          f"(exit code {EXIT_STOPPED}); rerun the same command to continue")
     ap.add_argument("--no-checkpoints", action="store_true")
+    ap.add_argument("--prepare-only", action="store_true",
+                    help="Only do the one-off passes for this variant / sampler (file stats, "
+                         "training sample, test arrays) and exit")
     ap.add_argument("--test-stop-after-units", type=int, default=None, help=argparse.SUPPRESS)
     ap.add_argument("--test-kill-after-units", type=int, default=None, help=argparse.SUPPRESS)
     ap.add_argument("--quick", action="store_true",
@@ -1427,7 +1430,7 @@ def train_all(args, out):
             if args.force or not os.path.exists(os.path.join(out, "runs", run_id(m, f, s) + ".json"))]
     n_total = len(args.fs_list) * len(args.seed_list) * len(args.model_list)
     log(f"{n_total} run(s) requested, {n_total - len(todo)} already done, {len(todo)} to do")
-    if not todo:
+    if not todo and not args.prepare_only:
         return 0
     check_stop("before loading data")
     ls = args.legacy_set
@@ -1463,9 +1466,17 @@ def train_all(args, out):
                              HC["main_days"], HC["day_counts"], name="holdout_labels_corrected.npz",
                              region=HC["region"], rowpos=HC["rowpos"])
     del train_icao
+    if args.prepare_only:
+        log(f"prepare-only: stats, training sample ({args.sampler}, design {design}) and test "
+            f"arrays are cached in {cache}")
+        return 0
 
     regions = df["region_cell"].astype(str).values
-    icao = df["icao24"].astype(str).values if "icao24" in df.columns else None
+    icao = None
+    if "icao24" in df.columns:      # stored as the integer address by the samplers
+        ic = df["icao24"]
+        icao = (np.char.mod("%06x", ic.to_numpy()) if pd.api.types.is_integer_dtype(ic)
+                else ic.astype(str).values)
     if v2 and icao is None:
         raise SystemExit("--protocol v2 needs the icao24 column in the training files")
     # v1: balanced class weights from all loaded labels (as federated_simulation.main)

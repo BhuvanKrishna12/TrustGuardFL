@@ -314,6 +314,25 @@ def train_file_stats_cached(paths, cache_dir, chunksize=2_000_000, log=print, st
 _DROP_BIT = {"N": 1, "F": 2, "P": 4}
 
 
+def icao_to_u32(col):
+    """icao24 strings -> uint32 (the 24-bit address; a malformed address gets a
+    stable hash with bit 31 set). Keeps the sampled frame small: 4 bytes per row
+    instead of a Python string. Only identity matters downstream (aircraft-
+    disjoint split, aircraft counts)."""
+    import hashlib
+    codes, uniq = pd.factorize(col.astype(str), sort=False)
+    u = np.empty(len(uniq), np.uint32)
+    for i, a in enumerate(uniq):
+        try:
+            v = int(a, 16)
+            if not 0 <= v < (1 << 24):
+                raise ValueError
+        except ValueError:
+            v = (1 << 31) | (int.from_bytes(hashlib.blake2b(a.encode(), digest_size=4).digest(), "big") >> 1)
+        u[i] = v
+    return u[codes] if len(uniq) else np.zeros(0, np.uint32)
+
+
 def uniform_sample_mv(paths, max_total_rows, stats, seed=42, chunksize=200_000, log=print,
                       compact_every=None, state_path=None, stop_check=None):
     """uniform_sample for every sampling design at once, resumable per file.
@@ -365,7 +384,7 @@ def uniform_sample_mv(paths, max_total_rows, stats, seed=42, chunksize=200_000, 
                 f"({seen:,} raw rows already streamed)")
         else:
             log("  uniform sampler: saved state belongs to other inputs, starting over")
-    compact_every = compact_every or max(1_000_000, max_total_rows // 2)
+    compact_every = compact_every or max(1_000_000, max_total_rows // 5)
 
     for fi, p in enumerate(paths):
         if fi < start_file:
@@ -411,6 +430,8 @@ def uniform_sample_mv(paths, max_total_rows, stats, seed=42, chunksize=200_000, 
             if num:
                 ch[num] = ch[num].astype("float32")
             ch = ch.drop(columns=["region_cell", "attack_type"])
+            if "icao24" in ch.columns:
+                ch["icao24"] = icao_to_u32(ch["icao24"])
             ch["_bC"] = bC[m].astype(np.int32)
             if mv:
                 ch = ch.drop(columns=["attack_type_legacy"])
@@ -547,6 +568,8 @@ def legacy_sample_view(paths, max_total_rows, stats, legacy_set=frozenset(), see
                     if c in chunk.columns and pd.api.types.is_numeric_dtype(chunk[c])]
         if num_cols:
             chunk[num_cols] = chunk[num_cols].astype("float32")
+        if "icao24" in chunk.columns:
+            chunk["icao24"] = icao_to_u32(chunk["icao24"])
         for (region, atk), group in chunk.groupby(["region_cell", "attack_type"]):
             key = (region, atk)
             reservoirs.setdefault(key, [])
