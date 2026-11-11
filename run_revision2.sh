@@ -36,8 +36,26 @@ NEED_GB="${REV2_NEED_GB:-135}"
 [ -n "$W" ] && [ "$W" != "/" ] || { echo "REV2_W is empty or /; refusing"; exit 2; }
 SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 STATUS="$W/STATUS.txt"; LOCK="$W/run.pid"; STOPF="$W/STOP"; DONE="$W/done"; LOGS="$W/logs"
+# Multi-machine: which share of the runs this machine does. From MY_SHARD (env or
+# $W/MY_SHARD file); empty / "all" means run everything (single-machine, as before).
+SHARD="${MY_SHARD:-}"
+[ -z "$SHARD" ] && [ -f "$W/MY_SHARD" ] && SHARD="$(tr -d '[:space:]' < "$W/MY_SHARD" 2>/dev/null)"
+case "${SHARD,,}" in all) SHARD="" ;; esac
 export REV2_W="$W" REV2_SIM="$SIM" REV2_STOP_FLAG="$STOPF" REV2_TRAIN_DAYS="$TRAIN_DAYS" REV2_TEST_DAYS="$TEST_DAYS"
+export REV2_SHARD="$SHARD"
 export PYTHONUNBUFFERED=1
+
+# Cache-only ("helper") mode: the 120 GB labelled training files are absent but the
+# ~2 GB cache (input_manifest.json + stats/sample caches) and the holdout CSV are
+# present. Such a machine runs steps 5..10 straight from the cache.
+cache_only_mode() {
+  local d
+  for d in $TRAIN_DAYS; do
+    [ -f "$W/labeled_mv/opensky_${d}_labeled.csv" ] && return 1   # a labelled file is present
+  done
+  [ -f "$W/cache/input_manifest.json" ] && [ -f "$W/holdout_sample_mv.csv" ]
+}
+if cache_only_mode; then export REV2_TRUST_CACHE=1; CACHE_ONLY=1; else CACHE_ONLY=0; fi
 
 say()      { mkdir -p "$W"; echo "$(date '+%a %d %b %H:%M')  $*" | tee -a "$STATUS"; }
 is_done()  { [ -f "$DONE/$1" ]; }
@@ -156,8 +174,23 @@ PY
 
 run_step() {  # steps 4..10: the run grid (experiments/rev2_plan.py)
   local n=$1 title=$2 est=$3
-  say "STEP $n/11 $title ($est)"
-  plan run --step "$n" >> "$LOGS/${n}_runs.log" 2>&1
+  if [ -n "$SHARD" ]; then say "STEP $n/11 $title ($est) [shard: $SHARD]"
+  else say "STEP $n/11 $title ($est)"; fi
+  plan run --step "$n" --shard "$SHARD" >> "$LOGS/${n}_runs.log" 2>&1
+  local rc=$?
+  # Step 4 (one-off sampling passes) runs only on the machine that HAS the labelled
+  # files; record the input sizes so a cache-only helper can key its cache. Harmless
+  # to re-run (atomic write).
+  if [ "$n" = 4 ] && [ "$rc" = 0 ] && [ "$CACHE_ONLY" != 1 ]; then write_manifest; fi
+  return $rc
+}
+
+write_manifest() {  # cache/input_manifest.json: {basename: size} for the training + holdout files
+  local files=() d
+  for d in $TRAIN_DAYS; do files+=("$W/labeled_mv/opensky_${d}_labeled.csv"); done
+  python3 "$CODE/experiments/make_input_manifest.py" --train-files "${files[@]}" \
+      --holdout "$W/holdout_sample_mv.csv" --cache-dir "$W/cache" --allow-missing \
+      >> "$LOGS/4_runs.log" 2>&1 && say "  wrote cache/input_manifest.json (for cache-only helpers)"
 }
 
 step_11() { # tables + zip
@@ -183,8 +216,37 @@ step_11() { # tables + zip
   fi
 }
 
+helper_prepare() {  # cache-only machines: verify the cache, then treat steps 1-4 as done
+  case "$1" in
+    1_setup)
+      say "STEP 1/11 cache-only helper: checking the code and python packages"
+      [ -f "$CODE/experiments/rev2_plan.py" ] || { say "ERROR: code folder $CODE is incomplete"; return 1; }
+      if ! python3 -c "import torch, lightgbm, pandas, sklearn, joblib, scipy" 2>"$LOGS/1_import.log"; then
+        say "  installing python packages from requirements.txt (one-off)"
+        pip install -q -r "$CODE/requirements.txt" > "$LOGS/1_pip.log" 2>&1 \
+          || { say "ERROR: pip install failed, see $LOGS/1_pip.log. Create the venv and run "; \
+               say "  pip install -r $CODE/requirements.txt --break-system-packages"; return 1; }
+      fi ;;
+    2_reprocess|3_testsample)
+      say "STEP ${1%%_*}/11 skipped on this machine (needs the labelled files; the cache carries it)" ;;
+    4_sampling)
+      say "STEP 4/11 cache-only helper: verifying the shared cache (manifest, stats, samples, holdout)"
+      if ! python3 "$CODE/experiments/verify_cache.py" --work "$W" > "$LOGS/4_verify.log" 2>&1; then
+        say "ERROR: the cache is incomplete for cache-only runs. See $LOGS/4_verify.log."
+        tail -n 8 "$LOGS/4_verify.log" | sed 's/^/  /' | tee -a "$STATUS"
+        say "  The user should rebuild the share (make_share.sh) on the machine with the files."
+        return 1
+      fi
+      say "  cache OK: this machine can run steps 5-10 without the 120 GB labelled files" ;;
+  esac
+  return 0
+}
+
 STEP_IDS="1_setup 2_reprocess 3_testsample 4_sampling 5_main 6_ablation 7_unified 8_mlp 9_fedprox 10_fedablation 11_results"
 do_step() {
+  if [ "$CACHE_ONLY" = 1 ]; then
+    case "$1" in 1_setup|2_reprocess|3_testsample|4_sampling) helper_prepare "$1"; return $? ;; esac
+  fi
   case "$1" in
     1_setup) step_1 ;;
     2_reprocess) step_2 ;;
@@ -293,8 +355,10 @@ print(f"  step 2: {nd}/8 days finished; about {max(left, 0) * d['avg_seconds_per
       f"({d['avg_seconds_per_hour']:.0f} s per hour of data)")
 PY
   fi
+  if [ "$CACHE_ONLY" = 1 ]; then echo "Mode: cache-only helper (no 120 GB labelled files; running from the ~2 GB cache)"; fi
+  [ -n "$SHARD" ] && echo "Shard: $SHARD  (this machine runs only the runs in experiments/shards/$SHARD.txt)"
   if [ -f "$CODE/experiments/rev2_plan.py" ]; then
-    ( activate >/dev/null 2>&1; plan status 2>/dev/null )
+    ( activate >/dev/null 2>&1; plan status --shard "$SHARD" 2>/dev/null )
   fi
   echo "Last lines of $STATUS:"
   tail -n 5 "$STATUS" 2>/dev/null | sed 's/^/  /'
@@ -309,8 +373,10 @@ cmd_dry() {
     echo "python3 -u $CODE/experiments/reprocess_mv.py --tars-list $W/tars.txt --days $d --out-dir $W/labeled_mv --tmp-dir $W/raw_tmp --stop-flag $STOPF --min-hours $MIN_HOURS    # step 2"
   done
   echo "python3 -u $CODE/experiments/make_holdout_sample.py --method hash --frac $TEST_FRAC $(for d in $TEST_DAYS; do printf '%s ' "$W/labeled_mv/opensky_${d}_labeled.csv"; done)--out $W/holdout_sample_mv.csv    # step 3"
+  [ -n "$SHARD" ] && echo "# shard: $SHARD"
+  [ "$CACHE_ONLY" = 1 ] && echo "# cache-only mode (labelled files absent; --trust-cache)"
   if [ -f "$CODE/experiments/rev2_plan.py" ]; then
-    local n; for n in 4 5 6 7 8 9 10; do echo "# step $n"; plan print --step $n; done
+    local n; for n in 4 5 6 7 8 9 10; do echo "# step $n"; plan print --step $n --shard "$SHARD"; done
   else
     echo "# steps 4-10: listed after step 1 has unpacked the code (or set REV2_CODE=/path/to/rev2)"
   fi
