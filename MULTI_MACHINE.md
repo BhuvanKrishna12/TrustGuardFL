@@ -81,7 +81,7 @@ Copy the share from the USB drive (find the drive letter with `ls /mnt`; replace
 ls /mnt
 mkdir -p ~/rev2_work
 cp -a /mnt/e/rev2_share/. ~/rev2_work/
-pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
 pip install -r ~/rev2_work/rev2/requirements.txt
 ```
 
@@ -128,7 +128,7 @@ source ~/flids-venv/bin/activate
 ls /mnt
 mkdir -p ~/rev2_work
 cp -a /mnt/e/rev2_share/. ~/rev2_work/
-pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
 pip install -r ~/rev2_work/rev2/requirements.txt
 ```
 

@@ -34,7 +34,7 @@ Install the Python packages. Install PyTorch matching your GPU first (the pinned
 2.14.1 is fine for recent NVIDIA cards, a 4060 included), then the rest:
 
 ```bash
-pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu130
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
 pip install -r ~/rev2_work/rev2/requirements.txt
 ```
 
