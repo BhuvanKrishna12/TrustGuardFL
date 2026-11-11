@@ -71,6 +71,20 @@ copies it to `D:\fl-ids-sweep\`. Send me that zip. If D: is not connected, the f
 `~/rev2_work/results_revision2.zip`; from Windows you can reach it at
 `\\wsl$\Ubuntu\home\sangeetha\rev2_work\results_revision2.zip`.
 
+## Splitting the work across three machines (optional, much faster)
+
+If you have two helpers with NVIDIA GPUs, you can split the remaining training
+(steps 5 to 10) three ways and finish in about a third of the time. Each helper
+needs only the ~2 GB cache, not the 120 GB labelled files. Full copy-paste
+instructions are in **`MULTI_MACHINE.md`**; the merge at the end is in
+**`MERGE.md`**; who runs what is in **`SPLIT.md`**.
+
+In short: on this machine, `bash ~/rev2_work/rev2/make_share.sh /mnt/d/rev2_share`
+builds the share, you set `echo me > ~/rev2_work/MY_SHARD` and keep running as
+usual, each helper runs their own `user1` / `user2` share, and at the end you
+merge everyone's `runs/` folders into the final tables. A machine with no
+`MY_SHARD` file still runs everything by itself, exactly as described above.
+
 ## If something looks stuck
 
 - `status` says the same thing for a long time: a federated run takes about 40 minutes,
