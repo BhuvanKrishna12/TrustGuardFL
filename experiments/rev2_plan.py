@@ -40,6 +40,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import variants as V  # noqa: E402
 
+SHARD_DIR = os.environ.get("REV2_SHARD_DIR", os.path.join(HERE, "shards"))
+
 TRAIN_DAYS = ["2019-01-07", "2019-04-01", "2019-06-24", "2019-09-30"]
 TEST_DAYS = ["2019-12-09", "2019-12-16", "2019-12-23", "2019-12-30"]
 ABL = ["C1", "C2", "C3", "C5"]            # the corrections that differ between v2 and v3
@@ -52,16 +54,130 @@ STEP_NAMES = {4: "sampling passes", 5: "main grid", 6: "correction ablation (Lig
 EXIT_STOPPED = 75
 
 
-def env():
+def env(shard=None):
     W = os.environ.get("REV2_W", os.path.expanduser("~/rev2_work"))
     sim = os.environ.get("REV2_SIM", "") == "1"
+    name = resolve_shard_name(shard)
     return {"W": W, "sim": sim,
             "labeled": os.path.join(W, "labeled_mv"), "holdout": os.path.join(W, "holdout_sample_mv.csv"),
             "runs": os.path.join(W, "runs"), "cache": os.path.join(W, "cache"),
             "stop": os.path.join(W, "STOP"),
             "train_days": os.environ.get("REV2_TRAIN_DAYS", " ".join(TRAIN_DAYS)).split(),
             "test_days": os.environ.get("REV2_TEST_DAYS", " ".join(TEST_DAYS)).split(),
-            "device": os.environ.get("REV2_DEVICE", "auto")}
+            "device": os.environ.get("REV2_DEVICE", "auto"),
+            "trust_cache": os.environ.get("REV2_TRUST_CACHE", "") == "1",
+            "shard": name, "shard_keys": load_shard_keys(name)}
+
+
+# ---------------------------------------------------------------------------
+# run-keys and sharding
+# ---------------------------------------------------------------------------
+# A run-key stably identifies one training run: step, model, variant (with the
+# sampler and any FedProx mu folded in so it is unique), feature set and seed.
+#   s{step}:{model}:{vtag}:{fset}:seed{seed}
+# e.g.  s5:fed_cnn:corrected:full:seed4
+#       s6:lgbm:legacy-ls:full:seed2         (legacy-sampler run)
+#       s9:fed_cnn:corrected-mu0.1:full:seed3 (FedProx mu=0.1)
+# Shard files (experiments/shards/<name>.txt) list one run-key per line
+# (# comments allowed). A machine runs exactly the run-keys in its shard.
+
+def job_vtag(job):
+    """Variant tag that makes a run-key unique within a step: the variant slug,
+    plus '-ls' for the legacy sampler and '-mu<x>' for FedProx."""
+    tag = V.variant_slug(V.parse_variant(job["variant"]))
+    ex = job["extra"]
+    if "--legacy-sampler" in ex:
+        tag += "-ls"
+    if "--fedprox-mu" in ex:
+        tag += "-mu" + ex[ex.index("--fedprox-mu") + 1]
+    return tag
+
+
+def run_id(model, fset, seed):
+    return f"{model}__{fset}__seed{seed}"
+
+
+def job_run_keys(step, job):
+    """{run_key: run_id} for every (model, feature-set, seed) of the job."""
+    vt = job_vtag(job)
+    out = {}
+    for m in job["models"].split(","):
+        for f in job["fsets"].split(","):
+            for s in job["seeds"].split(","):
+                out[f"s{step}:{m}:{vt}:{f}:seed{s}"] = run_id(m, f, s)
+    return out
+
+
+def resolve_shard_name(cli=None):
+    """Shard name from (in order) the CLI, then REV2_SHARD / MY_SHARD env vars.
+    'all', '', 'me,all' and None all mean 'run everything' (single-machine)."""
+    name = cli or os.environ.get("REV2_SHARD") or os.environ.get("MY_SHARD") or ""
+    name = name.strip()
+    return "" if name.lower() in ("", "all") else name
+
+
+def known_shards():
+    if not os.path.isdir(SHARD_DIR):
+        return []
+    return sorted(f[:-4] for f in os.listdir(SHARD_DIR) if f.endswith(".txt"))
+
+
+def load_shard_keys(name):
+    """Set of run-keys for a shard, or None for the single-machine case."""
+    if not name:
+        return None
+    path = os.path.join(SHARD_DIR, name + ".txt")
+    if not os.path.exists(path):
+        raise SystemExit(f"shard file not found: {path}\n"
+                         f"known shards: {', '.join(known_shards()) or '(none)'}")
+    keys = set()
+    with open(path) as fh:
+        for line in fh:
+            line = line.split("#", 1)[0].strip()
+            if line:
+                keys.add(line)
+    return keys
+
+
+def apply_shard(step, J, e):
+    """Set job['only'] to the set of run_ids assigned to this machine's shard
+    (None = all), and drop jobs with nothing assigned. Step 4 (prepare-only,
+    needs the labelled files) is never sharded: it stays on the user's machine."""
+    keys = e.get("shard_keys")
+    if keys is None or step == 4:
+        for j in J:
+            j["only"] = None
+        return J
+    kept = []
+    for j in J:
+        rk = job_run_keys(step, j)
+        only = {rid for k, rid in rk.items() if k in keys}
+        if only:
+            j["only"] = only
+            kept.append(j)
+    return kept
+
+
+def planned(step, e=None):
+    """Jobs of a step after shard filtering."""
+    e = e or env()
+    return apply_shard(step, jobs(step, e), e)
+
+
+def all_remaining_run_keys(e=None):
+    """{run_key: (step, dir, run_id)} for every run in steps 5..10 (unsharded).
+    Used by make_shards / coverage checks. Cross-step shared output files (the
+    step-7 legacy central-CNN seeds that reuse step 6's) appear under each step's
+    run-key but map to the same (dir, run_id)."""
+    e = e or env()
+    out = {}
+    for step in range(5, 11):
+        for j in jobs(step, e):
+            if "--prepare-only" in j["extra"]:
+                continue
+            for rk, rid in job_run_keys(step, j).items():
+                out[rk] = (step, j["dir"], rid)
+    return out
 
 
 def seeds(n, e):
@@ -128,17 +244,26 @@ def command(job, e):
                 "--strengths", "0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0"]
     else:
         cmd += ["--max-total-rows", os.environ.get("REV2_MAX_ROWS", "10000000")]
+    if e.get("trust_cache"):
+        cmd += ["--trust-cache"]
+    only = job.get("only")
+    if only is not None:
+        cmd += ["--only-runs", ",".join(sorted(only))]
     return cmd + job["extra"]
 
 
 def expected(job, e):
     if "--prepare-only" in job["extra"]:
         return []
+    only = job.get("only")
     out = []
     for m in job["models"].split(","):
         for f in job["fsets"].split(","):
             for s in job["seeds"].split(","):
-                out.append((m, os.path.join(e["runs"], job["dir"], "runs", f"{m}__{f}__seed{s}.json")))
+                rid = run_id(m, f, s)
+                if only is not None and rid not in only:
+                    continue
+                out.append((m, os.path.join(e["runs"], job["dir"], "runs", rid + ".json")))
     return out
 
 
@@ -166,7 +291,7 @@ def measured_seconds(e):
 
 
 def step_counts(step, e):
-    exp = [x for j in jobs(step, e) for x in expected(j, e)]
+    exp = [x for j in planned(step, e) for x in expected(j, e)]
     seen, uniq = set(), []
     for m, p in exp:
         if p not in seen:
@@ -183,15 +308,20 @@ def prep_done(job, e):
     return bool(glob.glob(os.path.join(e["cache"], f"train_sample_{tag}_*.json")))
 
 
-def cmd_print(step):
-    e = env()
-    for j in jobs(step, e):
+def cmd_print(step, shard=None):
+    e = env(shard)
+    for j in planned(step, e):
         print(" ".join(shlex.quote(c) for c in command(j, e)))
 
 
-def cmd_run(step):
-    e = env()
-    for j in jobs(step, e):
+def cmd_run(step, shard=None):
+    e = env(shard)
+    plan = planned(step, e)
+    if step != 4 and e.get("shard_keys") is not None and not plan:
+        print(f"step {step}: no runs assigned to this machine (shard '{e['shard']}'); "
+              f"done by another machine")
+        return 0
+    for j in plan:
         if os.path.exists(e["stop"]):
             return EXIT_STOPPED
         exp = expected(j, e)
@@ -204,13 +334,13 @@ def cmd_run(step):
         rc = subprocess.call(cmd)
         if rc != 0:
             return rc
-    return cmd_verify(step)
+    return cmd_verify(step, e["shard"])
 
 
-def cmd_verify(step):
-    e = env()
+def cmd_verify(step, shard=None):
+    e = env(shard)
     if step == 4:
-        missing = [j["dir"] for j in jobs(4, e) if not prep_done(j, e)]
+        missing = [j["dir"] for j in planned(4, e) if not prep_done(j, e)]
     else:
         uniq, done = step_counts(step, e)
         missing = [p for m, p in uniq if (m, p) not in done]
@@ -220,8 +350,27 @@ def cmd_verify(step):
     return 0
 
 
-def cmd_status():
-    e = env()
+def cmd_runkeys():
+    """Print every remaining run-key (steps 5..10) and the output it maps to."""
+    e = env("")   # unsharded
+    rk = all_remaining_run_keys(e)
+    files = {}
+    for k, (step, d, rid) in rk.items():
+        files.setdefault((d, rid), []).append(k)
+    for k in sorted(rk):
+        step, d, rid = rk[k]
+        shared = " [shared output]" if len(files[(d, rid)]) > 1 else ""
+        print(f"{k}\t-> runs/{d}/runs/{rid}.json{shared}")
+    print(f"# {len(rk)} run-keys, {len(files)} distinct output files")
+    return 0
+
+
+def cmd_status(shard=None):
+    e = env(shard)
+    if e.get("shard_keys") is not None:
+        print(f"  shard '{e['shard']}': "
+              f"{sum(len(expected(j, e)) for step in range(5, 11) for j in planned(step, e))} "
+              f"runs assigned to this machine")
     secs, n = measured_seconds(e)
     total_left = 0.0
     for step in range(5, 11):
@@ -237,8 +386,8 @@ def cmd_status():
     return 0
 
 
-def cmd_table():
-    e = env()
+def cmd_table(shard=None):
+    e = env(shard)
     tot_runs, tot_h = 0, 0.0
     print(f"{'step':<48}{'lgbm':>6}{'c_cnn':>7}{'c_mlp':>7}{'f_cnn':>7}{'f_mlp':>7}{'hours':>8}")
     for step in range(5, 11):
@@ -262,20 +411,25 @@ def cmd_table():
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("action", choices=("print", "run", "verify", "status", "table"))
+    ap.add_argument("action", choices=("print", "run", "verify", "status", "table", "runkeys"))
     ap.add_argument("--step", type=int, default=None)
+    ap.add_argument("--shard", default=None,
+                    help="shard name (experiments/shards/<name>.txt); default from "
+                         "REV2_SHARD / MY_SHARD; 'all' or unset = run everything")
     a = ap.parse_args()
     if a.action in ("print", "run", "verify") and a.step is None:
         ap.error("--step is required")
     if a.action == "print":
-        return cmd_print(a.step) or 0
+        return cmd_print(a.step, a.shard) or 0
     if a.action == "run":
-        return cmd_run(a.step)
+        return cmd_run(a.step, a.shard)
     if a.action == "verify":
-        return cmd_verify(a.step)
+        return cmd_verify(a.step, a.shard)
     if a.action == "status":
-        return cmd_status()
-    return cmd_table()
+        return cmd_status(a.shard)
+    if a.action == "runkeys":
+        return cmd_runkeys()
+    return cmd_table(a.shard)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,35 @@
+# shard 'user1' - revision-2 runs assigned to this machine.
+# One run-key per line (step:model:variant:feature-set:seed). Edit freely to
+# rebalance: move lines between me.txt / user1.txt / user2.txt. Keep all the
+# lines of one output together (a '[shared]' key and its twin, same seed).
+
+# step [5] main fed_cnn core (2 run(s), ~116 min)
+s5:fed_cnn:corrected:core:seed2
+s5:fed_cnn:corrected:core:seed5
+
+# step [7] var_legacy fed_cnn full (1 run(s), ~58 min)
+s7:fed_cnn:legacy:full:seed3
+
+# step [8] main fed_mlp full (2 run(s), ~116 min)
+s8:fed_mlp:corrected:full:seed1
+s8:fed_mlp:corrected:full:seed4
+
+# step [9] fedprox_mu0.01 fed_cnn full (1 run(s), ~58 min)
+s9:fed_cnn:corrected-mu0.01:full:seed2
+
+# step [9] fedprox_mu0.1 fed_cnn full (1 run(s), ~58 min)
+s9:fed_cnn:corrected-mu0.1:full:seed2
+
+# step [10] var_loo_C1 fed_cnn full (2 run(s), ~116 min)
+s10:fed_cnn:loo_C1:full:seed1
+s10:fed_cnn:loo_C1:full:seed3
+
+# step [10] var_loo_C2 fed_cnn full (1 run(s), ~58 min)
+s10:fed_cnn:loo_C2:full:seed2
+
+# step [10] var_loo_C3 fed_cnn full (2 run(s), ~116 min)
+s10:fed_cnn:loo_C3:full:seed1
+s10:fed_cnn:loo_C3:full:seed3
+
+# step [10] var_loo_C5 fed_cnn full (1 run(s), ~58 min)
+s10:fed_cnn:loo_C5:full:seed2

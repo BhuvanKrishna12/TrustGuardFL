@@ -1,0 +1,181 @@
+# shard 'me' - revision-2 runs assigned to this machine.
+# One run-key per line (step:model:variant:feature-set:seed). Edit freely to
+# rebalance: move lines between me.txt / user1.txt / user2.txt. Keep all the
+# lines of one output together (a '[shared]' key and its twin, same seed).
+
+# step [5] main fed_cnn core (2 run(s), ~116 min)
+s5:fed_cnn:corrected:core:seed1
+s5:fed_cnn:corrected:core:seed4
+
+# step [5] main fed_cnn full (2 run(s), ~116 min)
+s5:fed_cnn:corrected:full:seed4
+s5:fed_cnn:corrected:full:seed5
+
+# step [6] ls_corrected central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:corrected-ls:full:seed1
+s6:central_cnn:corrected-ls:full:seed2
+s6:central_cnn:corrected-ls:full:seed3
+
+# step [6] ls_corrected lgbm full (5 run(s), ~8 min)
+s6:lgbm:corrected-ls:full:seed1
+s6:lgbm:corrected-ls:full:seed2
+s6:lgbm:corrected-ls:full:seed3
+s6:lgbm:corrected-ls:full:seed4
+s6:lgbm:corrected-ls:full:seed5
+
+# step [6] ls_legacy central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:legacy-ls:full:seed1
+s6:central_cnn:legacy-ls:full:seed2
+s6:central_cnn:legacy-ls:full:seed3
+
+# step [6] ls_legacy lgbm full (5 run(s), ~8 min)
+s6:lgbm:legacy-ls:full:seed1
+s6:lgbm:legacy-ls:full:seed2
+s6:lgbm:legacy-ls:full:seed3
+s6:lgbm:legacy-ls:full:seed4
+s6:lgbm:legacy-ls:full:seed5
+
+# step [6] var_add_C1 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:add_C1:full:seed1
+s6:central_cnn:add_C1:full:seed2
+s6:central_cnn:add_C1:full:seed3
+
+# step [6] var_add_C1 lgbm full (5 run(s), ~8 min)
+s6:lgbm:add_C1:full:seed1
+s6:lgbm:add_C1:full:seed2
+s6:lgbm:add_C1:full:seed3
+s6:lgbm:add_C1:full:seed4
+s6:lgbm:add_C1:full:seed5
+
+# step [6] var_add_C2 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:add_C2:full:seed1
+s6:central_cnn:add_C2:full:seed2
+s6:central_cnn:add_C2:full:seed3
+
+# step [6] var_add_C2 lgbm full (5 run(s), ~8 min)
+s6:lgbm:add_C2:full:seed1
+s6:lgbm:add_C2:full:seed2
+s6:lgbm:add_C2:full:seed3
+s6:lgbm:add_C2:full:seed4
+s6:lgbm:add_C2:full:seed5
+
+# step [6] var_add_C3 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:add_C3:full:seed1
+s6:central_cnn:add_C3:full:seed2
+s6:central_cnn:add_C3:full:seed3
+
+# step [6] var_add_C3 lgbm full (5 run(s), ~8 min)
+s6:lgbm:add_C3:full:seed1
+s6:lgbm:add_C3:full:seed2
+s6:lgbm:add_C3:full:seed3
+s6:lgbm:add_C3:full:seed4
+s6:lgbm:add_C3:full:seed5
+
+# step [6] var_add_C5 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:add_C5:full:seed1
+s6:central_cnn:add_C5:full:seed2
+s6:central_cnn:add_C5:full:seed3
+
+# step [6] var_add_C5 lgbm full (5 run(s), ~8 min)
+s6:lgbm:add_C5:full:seed1
+s6:lgbm:add_C5:full:seed2
+s6:lgbm:add_C5:full:seed3
+s6:lgbm:add_C5:full:seed4
+s6:lgbm:add_C5:full:seed5
+
+# step [6, 7] var_legacy central_cnn full (5 run(s), ~15 min)
+s6:central_cnn:legacy:full:seed1   # shared output (also verified by another step)
+s7:central_cnn:legacy:full:seed1   # shared output (also verified by another step)
+s6:central_cnn:legacy:full:seed2   # shared output (also verified by another step)
+s7:central_cnn:legacy:full:seed2   # shared output (also verified by another step)
+s6:central_cnn:legacy:full:seed3   # shared output (also verified by another step)
+s7:central_cnn:legacy:full:seed3   # shared output (also verified by another step)
+s7:central_cnn:legacy:full:seed4
+s7:central_cnn:legacy:full:seed5
+
+# step [6] var_legacy lgbm full (5 run(s), ~8 min)
+s6:lgbm:legacy:full:seed1
+s6:lgbm:legacy:full:seed2
+s6:lgbm:legacy:full:seed3
+s6:lgbm:legacy:full:seed4
+s6:lgbm:legacy:full:seed5
+
+# step [6] var_loo_C1 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:loo_C1:full:seed1
+s6:central_cnn:loo_C1:full:seed2
+s6:central_cnn:loo_C1:full:seed3
+
+# step [6] var_loo_C1 lgbm full (5 run(s), ~8 min)
+s6:lgbm:loo_C1:full:seed1
+s6:lgbm:loo_C1:full:seed2
+s6:lgbm:loo_C1:full:seed3
+s6:lgbm:loo_C1:full:seed4
+s6:lgbm:loo_C1:full:seed5
+
+# step [6] var_loo_C2 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:loo_C2:full:seed1
+s6:central_cnn:loo_C2:full:seed2
+s6:central_cnn:loo_C2:full:seed3
+
+# step [6] var_loo_C2 lgbm full (5 run(s), ~8 min)
+s6:lgbm:loo_C2:full:seed1
+s6:lgbm:loo_C2:full:seed2
+s6:lgbm:loo_C2:full:seed3
+s6:lgbm:loo_C2:full:seed4
+s6:lgbm:loo_C2:full:seed5
+
+# step [6] var_loo_C3 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:loo_C3:full:seed1
+s6:central_cnn:loo_C3:full:seed2
+s6:central_cnn:loo_C3:full:seed3
+
+# step [6] var_loo_C3 lgbm full (5 run(s), ~8 min)
+s6:lgbm:loo_C3:full:seed1
+s6:lgbm:loo_C3:full:seed2
+s6:lgbm:loo_C3:full:seed3
+s6:lgbm:loo_C3:full:seed4
+s6:lgbm:loo_C3:full:seed5
+
+# step [6] var_loo_C5 central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:loo_C5:full:seed1
+s6:central_cnn:loo_C5:full:seed2
+s6:central_cnn:loo_C5:full:seed3
+
+# step [6] var_loo_C5 lgbm full (5 run(s), ~8 min)
+s6:lgbm:loo_C5:full:seed1
+s6:lgbm:loo_C5:full:seed2
+s6:lgbm:loo_C5:full:seed3
+s6:lgbm:loo_C5:full:seed4
+s6:lgbm:loo_C5:full:seed5
+
+# step [6] var_prefloor central_cnn full (3 run(s), ~9 min)
+s6:central_cnn:prefloor:full:seed1
+s6:central_cnn:prefloor:full:seed2
+s6:central_cnn:prefloor:full:seed3
+
+# step [6] var_prefloor lgbm full (5 run(s), ~8 min)
+s6:lgbm:prefloor:full:seed1
+s6:lgbm:prefloor:full:seed2
+s6:lgbm:prefloor:full:seed3
+s6:lgbm:prefloor:full:seed4
+s6:lgbm:prefloor:full:seed5
+
+# step [7] var_legacy fed_cnn full (2 run(s), ~116 min)
+s7:fed_cnn:legacy:full:seed2
+s7:fed_cnn:legacy:full:seed5
+
+# step [8] main central_mlp full (5 run(s), ~15 min)
+s8:central_mlp:corrected:full:seed1
+s8:central_mlp:corrected:full:seed2
+s8:central_mlp:corrected:full:seed3
+s8:central_mlp:corrected:full:seed4
+s8:central_mlp:corrected:full:seed5
+
+# step [8] main fed_mlp full (1 run(s), ~58 min)
+s8:fed_mlp:corrected:full:seed3
+
+# step [9] fedprox_mu0.01 fed_cnn full (1 run(s), ~58 min)
+s9:fed_cnn:corrected-mu0.01:full:seed1
+
+# step [9] fedprox_mu0.1 fed_cnn full (1 run(s), ~58 min)
+s9:fed_cnn:corrected-mu0.1:full:seed1
