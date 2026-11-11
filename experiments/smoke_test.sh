@@ -96,12 +96,21 @@ for p in glob.glob(sys.argv[1] + "/*/runs/*__*__seed*.json"):
 print(f"RUN JSON CHECK OK: {n} revision-2 run files carry variant, protocol, s*, validation "
       f"metrics, PR-AUC, false-alert counts and per-client test metrics")
 PY
+echo "== revision 2: cache-only (trust cache) equivalence, labelled files deleted"
+python3 experiments/test_trust_cache.py "$W/trustcache" | tail -1
+echo "== revision 2: run sharding (3 disjoint shards, exact cover)"
+python3 experiments/test_shards.py | tail -1
+
 echo "== revision 2: run_revision2.sh"
 bash -n "$REPO/run_revision2.sh"
+bash -n "$REPO/make_share.sh"
+bash -n "$REPO/experiments/test_multi_machine.sh"
 REV2_W="$W/dry" REV2_CODE="$REPO" bash "$REPO/run_revision2.sh" dry-run > "$W/dry_run.txt"
 echo "  dry-run lists $(grep -c run_experiments.py "$W/dry_run.txt") harness commands"
 if [ "${SMOKE_SKIP_SIM:-0}" != "1" ]; then
   bash experiments/test_run_revision2.sh "$W/sim" | tail -12
+  echo "== revision 2: cache-only multi-machine simulation (share, helper, merge, aggregate)"
+  bash experiments/test_multi_machine.sh "$W/mm" | tail -3
   R2ROOT="$W/sim/W/runs"
 else
   R2ROOT="$W/r2"
