@@ -183,8 +183,10 @@ class _Tee(io.TextIOBase):
 
 def file_key(paths, *extra):
     """Cache key from file basenames + sizes (not absolute paths, so a cache
-    copied to another machine with the same files is still recognised)."""
-    parts = [(os.path.basename(p), os.path.getsize(p)) for p in paths]
+    copied to another machine with the same files is still recognised).
+    Sizes come from sampling.input_size, so in cache-only mode they are read
+    from cache/input_manifest.json when the labelled file itself is absent."""
+    parts = [(os.path.basename(p), sampling.input_size(p)) for p in paths]
     blob = json.dumps([parts, list(extra)], sort_keys=True)
     return hashlib.sha1(blob.encode()).hexdigest()[:12]
 
@@ -281,6 +283,13 @@ def load_training_sample(paths, max_total_rows, cache_dir, sampler, stats, legac
         log(f"Training sample ({tag}): loading cache {data_path}")
         raw = pd.read_pickle(data_path)
         base = json.load(open(meta_path))
+    elif sampling.trust_cache_enabled() and any(not os.path.exists(p) for p in paths):
+        raise SystemExit(
+            f"cache-only mode: the training-sample cache for sampler '{tag}' is "
+            f"missing ({data_path}). This sample is produced by step 4 "
+            f"(the one-off sampling passes) on the machine that HAS the labelled "
+            f"training files. Copy the whole cache/ folder from that machine, or "
+            f"run this variant/sampler on the machine with the files.")
     else:
         t0 = time.time()
         if sampler == "uniform":
@@ -329,7 +338,7 @@ def load_training_sample(paths, max_total_rows, cache_dir, sampler, stats, legac
     meta = dict(base)
     meta.update({
         "files": [os.path.abspath(p) for p in paths],
-        "file_sizes": [os.path.getsize(p) for p in paths],
+        "file_sizes": [sampling.input_size(p) for p in paths],
         "max_total_rows": max_total_rows,
         "rows": int(len(df)),
         "design": design,
@@ -1266,6 +1275,16 @@ def parse_args(argv=None):
     ap.add_argument("--repredict", action="store_true",
                     help="With --holdout-only: re-score --holdout with the saved models")
     ap.add_argument("--force", action="store_true", help="Retrain runs whose JSON exists")
+    ap.add_argument("--trust-cache", action="store_true",
+                    help="Cache-only mode: read input file sizes from "
+                         "cache/input_manifest.json and build stats / training sample / "
+                         "holdout arrays from the cache without opening the labelled "
+                         "training files (which may be absent). Auto-enabled when a "
+                         "training file is missing but the manifest and caches exist.")
+    ap.add_argument("--only-runs", default=None,
+                    help="Comma-separated run ids (model__fset__seed) to run; others in "
+                         "the model x feature-set x seed grid are skipped. Used by the "
+                         "sharding plan to assign a subset of a job to this machine.")
     ap.add_argument("--stop-flag", default=os.environ.get("REV2_STOP_FLAG"),
                     help="When this file exists, stop after the current round / epoch / run "
                          f"(exit code {EXIT_STOPPED}); rerun the same command to continue")
@@ -1290,6 +1309,8 @@ def parse_args(argv=None):
         args.strengths = args.strengths or "0,0.5,1"
     args.seeds = args.seeds or "1,2,3,4,5"
     args.strengths = args.strengths or DEFAULT_STRENGTHS
+    args.only_run_set = (set(r.strip() for r in args.only_runs.split(",") if r.strip())
+                         if args.only_runs else None)
     args.sampler = "legacy" if args.legacy_sampler else "uniform"
     args.seed_list = [int(s) for s in args.seeds.split(",") if s.strip()]
     args.model_list = [m.strip() for m in args.models.split(",") if m.strip()]
@@ -1385,6 +1406,44 @@ SELECTION_RULE["fed_mlp"] = SELECTION_RULE["fed_cnn"]
 SELECTION_RULE["central_mlp"] = SELECTION_RULE["central_cnn"]
 
 
+def setup_trust_cache(args):
+    """Load cache/input_manifest.json if present and decide whether to run in
+    cache-only mode. Explicit with --trust-cache; otherwise auto-enabled when a
+    training file is absent but the manifest lists it (so a helper with only the
+    cache 'just works'). Installs the basename->size manifest into sampling."""
+    manifest = {}
+    mpath = os.path.join(args.cache_dir, "input_manifest.json")
+    if os.path.exists(mpath):
+        try:
+            data = json.load(open(mpath))
+            manifest = data.get("files", data) if isinstance(data, dict) else {}
+            manifest = {os.path.basename(k): int(v["size"] if isinstance(v, dict) else v)
+                        for k, v in manifest.items()}
+        except Exception as e:
+            manifest = {}
+            log(f"NOTE: could not read input manifest {mpath}: {e}")
+    files = list(args.train_files or [])
+    if args.holdout:
+        files.append(args.holdout)
+    missing = [p for p in files if not os.path.exists(p)]
+    trust = bool(args.trust_cache) or (bool(missing) and bool(manifest))
+    if trust and not manifest:
+        raise SystemExit(
+            "cache-only mode requested (or a training file is absent) but "
+            f"{mpath} was not found. Build it on the machine that HAS the labelled "
+            "files:  python3 experiments/make_input_manifest.py --train-files ... "
+            "--holdout ... --cache-dir <cache>  (step 4 of run_revision2.sh writes it "
+            "automatically).")
+    sampling.set_input_manifest(manifest, trust_cache=trust)
+    args.trust_cache = trust
+    if trust:
+        unknown = [os.path.basename(p) for p in missing if os.path.basename(p) not in manifest]
+        if unknown:
+            raise SystemExit(f"cache-only mode: these absent files are not in the manifest "
+                             f"{mpath}: {unknown}")
+    return trust
+
+
 def main(argv=None):
     global LOG_FH, STOP_FLAG
     args = parse_args(argv)
@@ -1393,6 +1452,7 @@ def main(argv=None):
         os.makedirs(os.path.join(out, sub), exist_ok=True)
     args.cache_dir = os.path.abspath(args.cache_dir or os.path.join(out, "cache"))
     os.makedirs(args.cache_dir, exist_ok=True)
+    setup_trust_cache(args)
     STOP_FLAG = args.stop_flag
     _TEST["stop_after"], _TEST["kill_after"] = args.test_stop_after_units, args.test_kill_after_units
     LOG_FH = open(os.path.join(out, "run_experiments.log"), "a")
@@ -1426,9 +1486,15 @@ def _transform_blocks(scaler, Xraw, step=2_000_000):
 
 
 def train_all(args, out):
-    todo = [(f, s, m) for f in args.fs_list for s in args.seed_list for m in args.model_list
+    only = args.only_run_set
+    grid = [(f, s, m) for f in args.fs_list for s in args.seed_list for m in args.model_list
+            if only is None or run_id(m, f, s) in only]
+    todo = [(f, s, m) for (f, s, m) in grid
             if args.force or not os.path.exists(os.path.join(out, "runs", run_id(m, f, s) + ".json"))]
-    n_total = len(args.fs_list) * len(args.seed_list) * len(args.model_list)
+    n_total = len(grid)
+    if only is not None:
+        log(f"--only-runs: {len(grid)} of {len(args.fs_list) * len(args.seed_list) * len(args.model_list)} "
+            f"grid runs assigned to this machine")
     log(f"{n_total} run(s) requested, {n_total - len(todo)} already done, {len(todo)} to do")
     if not todo and not args.prepare_only:
         return 0
@@ -1647,7 +1713,8 @@ def train_all(args, out):
                     "config": {k: (list(v) if isinstance(v, (tuple, frozenset)) else v)
                                for k, v in vars(args).items()
                                if k not in ("seed_list", "model_list", "fs_list", "legacy_set",
-                                            "test_stop_after_units", "test_kill_after_units")},
+                                            "only_run_set", "test_stop_after_units",
+                                            "test_kill_after_units")},
                     "data": {
                         "train_files": [os.path.abspath(p) for p in args.train_files],
                         "sampler": sample_meta.get("sampler"),

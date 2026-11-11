@@ -198,6 +198,45 @@ import pickle    # noqa: E402
 import variants as V  # noqa: E402
 
 
+# ---------------------------------------------------------------------------
+# input-size manifest (cache-only / "trust cache" mode)
+# ---------------------------------------------------------------------------
+# A machine that has the big labelled training files records their sizes in
+# cache/input_manifest.json ({basename: size}). A machine that only has the
+# ~2 GB cache (not the 120 GB labelled files) loads that manifest and uses the
+# recorded sizes wherever the code would otherwise call os.path.getsize on an
+# absent file, so the cache keys match and every cached artifact is found.
+_SIZE_MANIFEST = {}       # basename -> int size
+_TRUST_CACHE = False      # when True, an absent file is OK if the manifest knows it
+
+
+def set_input_manifest(manifest, trust_cache=False):
+    """Install the basename->size manifest used by input_size(); idempotent."""
+    global _SIZE_MANIFEST, _TRUST_CACHE
+    _SIZE_MANIFEST = {os.path.basename(k): int(v) for k, v in (manifest or {}).items()}
+    _TRUST_CACHE = bool(trust_cache)
+
+
+def input_size(path):
+    """Size of an input file: os.path.getsize when it is present, else the size
+    recorded in the manifest (cache-only mode). Fails clearly when neither is
+    available, so a wrong/stale cache can never be used silently."""
+    if os.path.exists(path):
+        return os.path.getsize(path)
+    bn = os.path.basename(path)
+    if bn in _SIZE_MANIFEST:
+        return _SIZE_MANIFEST[bn]
+    raise FileNotFoundError(
+        f"input file '{path}' is not present and its size is not in the input "
+        f"manifest. In cache-only mode every training/holdout file must be listed "
+        f"in cache/input_manifest.json; build it on the machine that HAS the files "
+        f"with  python3 experiments/make_input_manifest.py  (or run step 4 there).")
+
+
+def trust_cache_enabled():
+    return _TRUST_CACHE
+
+
 class StopRequested(Exception):
     """Raised when the STOP flag is seen; finished units are already on disk."""
 
@@ -221,7 +260,7 @@ def atomic_json(obj, path):
 
 
 def _file_sig(p):
-    return [os.path.basename(p), os.path.getsize(p)]
+    return [os.path.basename(p), input_size(p)]
 
 
 def file_is_mv(path):
@@ -270,13 +309,19 @@ def train_file_stats_cached(paths, cache_dir, chunksize=2_000_000, log=print, st
     returned numbers are those of train_file_stats on the v3 file."""
     per_file, icao = [], set()
     for p in paths:
-        key = f"{os.path.basename(p)}.{os.path.getsize(p)}"
+        key = f"{os.path.basename(p)}.{input_size(p)}"
         jp = os.path.join(cache_dir, f"filestats_{key}.json")
         ip = os.path.join(cache_dir, f"filestats_{key}.icao24.txt.gz")
         if os.path.exists(jp) and os.path.exists(ip):
             st = json.load(open(jp))
             with gzip.open(ip, "rt") as f:
                 ic = set(f.read().split())
+        elif _TRUST_CACHE and not os.path.exists(p):
+            raise SystemExit(
+                f"cache-only mode: the training-file stats cache for "
+                f"'{os.path.basename(p)}' is missing ({jp} / {ip}). This cache is "
+                f"produced by step 4 on the machine that HAS the labelled files; "
+                f"copy the whole cache/ folder from that machine.")
         else:
             t0 = time.time()
             st, ic = _stats_one_file(p, chunksize, stop_check)
