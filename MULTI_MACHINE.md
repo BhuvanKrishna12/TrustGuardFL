@@ -7,16 +7,20 @@ files). At the end you merge everyone's results into the final tables.
 
 Who does what:
 
-- **You (the user):** finish step 4 so the cache exists, build the share, hand a
-  copy to each helper, and keep running your own share (`me`).
-- **Each helper:** copy the share, pick `user1` or `user2`, run start/status/stop,
-  send one zip back.
+- **You (the user), machine `me` (RTX 3050):** finish step 4 so the cache exists,
+  build the share, hand a copy to each helper, and keep running your own share.
+  You and `user1` share the heavy federated runs.
+- **Helper 1, `user1` (RTX 4060, the faster GPU):** copy the share, run its
+  federated share, send one zip back. It gets a bit more than `me` because the
+  4060 is faster.
+- **Helper 2, `user2` (integrated GPU, no CUDA - CPU only):** gets only the fast,
+  non-federated runs (the correction ablation and central/MLP runs). It runs on
+  the CPU and gets **zero** federated runs, which would take hours each on a CPU.
 - **You, at the end:** unzip both helpers' results next to yours and run the
   merge, which builds the tables.
 
-The split is in `SPLIT.md` (about 12 hours per machine with the measured 3050
-times). Every block below is copy-paste WSL. Assume Ubuntu on WSL on all three
-machines, the same as your main laptop.
+The split is in `SPLIT.md`. Every block below is copy-paste WSL. Assume Ubuntu on
+WSL on all three machines, the same as your main laptop.
 
 ---
 
@@ -113,24 +117,40 @@ cp ~/rev2_runs_user1.zip /mnt/e/
 
 ---
 
-## On helper 2's machine
+## On helper 2's machine (the integrated-GPU / CPU-only machine)
 
-Identical to helper 1, except choose `user2`:
+Helper 2 has **no NVIDIA GPU** (integrated graphics only), so it runs on the CPU.
+Its share (`user2`) is only the fast work (the LightGBM + central-CNN correction
+ablation and the central/MLP runs); no slow federated runs are assigned to it, so
+CPU is fine and it finishes well within the others' window. **Skip `nvidia-smi`**
+here (it will fail, which is expected) and install the smaller **CPU** build of
+PyTorch.
+
+One-time setup (no `nvidia-smi`):
 
 ```bash
-nvidia-smi
 sudo apt update && sudo apt install -y python3.12 python3.12-venv
 python3.12 -m venv ~/flids-venv
 source ~/flids-venv/bin/activate
 ```
 
+Copy the share from USB (find the letter with `ls /mnt`; replace `e` if different),
+then install the **CPU** wheel of PyTorch and the rest:
+
 ```bash
 ls /mnt
 mkdir -p ~/rev2_work
 cp -a /mnt/e/rev2_share/. ~/rev2_work/
-pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
 pip install -r ~/rev2_work/rev2/requirements.txt
 ```
+
+(If you already installed a CUDA wheel such as `cu126` or `cu130`, that is fine
+too; it still runs on CPU. Add `--break-system-packages` to the last line if pip
+complains about an externally managed environment.)
+
+Pick the `user2` share and start. It detects there is no GPU and runs on the CPU
+automatically; you do not set anything:
 
 ```bash
 echo user2 > ~/rev2_work/MY_SHARD
@@ -141,6 +161,9 @@ bash ~/rev2_work/rev2/run_revision2.sh start
 bash ~/rev2_work/rev2/run_revision2.sh status
 bash ~/rev2_work/rev2/run_revision2.sh stop
 ```
+
+When status says everything is finished, zip and return the runs (replace `e`
+with the USB drive letter):
 
 ```bash
 cd ~/rev2_work && zip -qr ~/rev2_runs_user2.zip runs
@@ -177,8 +200,10 @@ The tables are in `~/rev2_work/generated`.
   files in `experiments/shards/` (`me.txt`, `user1.txt`, `user2.txt`): move whole
   run-key lines between them, keeping any `# shared output` pair together. Then
   rebuild the share so the helpers get the new files. To regenerate from scratch
-  once you know a helper GPU's speed, run for example
-  `python3 experiments/make_shards.py --weights fed_cnn=2600,fed_mlp=2600`.
+  (the default already treats `user2` as CPU-only and weights `user1` at 1.3x),
+  run for example `python3 experiments/make_shards.py --speed user1=1.5` if the
+  4060 turns out faster, or `--cpu-central-weight 720` if the integrated machine's
+  central-CNN runs take ~12 min. `--cpu-only ''` turns the CPU-only rule off.
 - **Per-GPU differences:** runs on different GPUs can differ slightly per seed.
   This is expected and acceptable; note it in the paper's reproducibility section.
 - **A helper has no big files:** the script detects this automatically ("cache-only

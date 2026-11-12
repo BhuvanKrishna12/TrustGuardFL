@@ -6,23 +6,14 @@ main machine. Your machine works from the ~2 GB cache in here instead. You will
 run a start/status/stop script, then send one zip back. Nothing here touches the
 rest of your computer.
 
-You need: Windows with WSL (Ubuntu), an NVIDIA GPU, and about 13 hours of GPU
-time spread over as many sittings as you like (you can stop and resume anytime).
-
-Every block below is copy-paste. The only line you change is picking `user1` or
-`user2` (whichever you were told).
+You need: Windows with WSL (Ubuntu) and about 9 to 15 hours of compute time spread
+over as many sittings as you like (you can stop and resume anytime). You were told
+whether you are **`user1`** (NVIDIA GPU) or **`user2`** (no NVIDIA GPU, runs on the
+CPU). Follow the matching setup below. Every block is copy-paste.
 
 ## 1. One-time WSL setup (about 10 minutes)
 
-Open **Ubuntu (WSL)** from the Start menu, then paste these blocks one at a time.
-
-Check the GPU is visible inside WSL (you should see a table with your GPU):
-
-```bash
-nvidia-smi
-```
-
-Make a Python 3.12 virtual environment and install the packages:
+Open **Ubuntu (WSL)** from the Start menu. Make a Python 3.12 virtual environment:
 
 ```bash
 sudo apt update && sudo apt install -y python3.12 python3.12-venv
@@ -30,19 +21,20 @@ python3.12 -m venv ~/flids-venv
 source ~/flids-venv/bin/activate
 ```
 
-Install the Python packages. Install PyTorch matching your GPU first (the pinned
-2.14.1 is fine for recent NVIDIA cards, a 4060 included), then the rest:
+### If you are `user1` (you have an NVIDIA GPU)
+
+Check the GPU is visible inside WSL (you should see a table with your GPU):
+
+```bash
+nvidia-smi
+```
+
+Install the CUDA build of PyTorch (the pinned 2.14.1 is fine for recent NVIDIA
+cards, a 4060 included), then the rest:
 
 ```bash
 pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
 pip install -r ~/rev2_work/rev2/requirements.txt
-```
-
-If pip refuses with an "externally managed environment" error, add
-`--break-system-packages`:
-
-```bash
-pip install -r ~/rev2_work/rev2/requirements.txt --break-system-packages
 ```
 
 Confirm PyTorch sees the GPU (should print `True`):
@@ -50,6 +42,25 @@ Confirm PyTorch sees the GPU (should print `True`):
 ```bash
 python3 -c "import torch; print(torch.cuda.is_available())"
 ```
+
+### If you are `user2` (integrated graphics, no NVIDIA GPU)
+
+**Skip `nvidia-smi`** - it will fail, which is expected. Your share is only fast
+work, so the CPU is fine. Install the smaller **CPU** build of PyTorch, then the
+rest:
+
+```bash
+pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+pip install -r ~/rev2_work/rev2/requirements.txt
+```
+
+(If you already installed a CUDA wheel such as `cu126`, that works on CPU too.) The
+script uses the CPU automatically; you set nothing.
+
+### Either way
+
+If pip refuses with an "externally managed environment" error, add
+`--break-system-packages` to the `pip install -r ...` line.
 
 ## 2. Copy this share into WSL
 

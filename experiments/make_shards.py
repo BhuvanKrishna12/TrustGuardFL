@@ -96,40 +96,58 @@ def build_units(done, weights):
     return units
 
 
-def unit_flags(u, use_rules):
-    u["force_me"] = use_rules and (6 in u["steps"])
-    u["prefer_helper"] = use_rules and (u["steps"] == {10})
-    return u
+def is_fed(model):
+    return model.startswith("fed_")
 
 
-def assign(units, machines, use_rules):
-    """Greedy longest-first packing at the per-run level (so a heavy federated
-    series can split across helpers for a tighter time balance), with the
-    me-forced / helper-preferred rules. Light runs (LightGBM, central) are
-    grouped so their seeds tend to stay together; heavy federated runs are
-    balanced first. Returns {machine: [unit,...]}, load."""
+def assign(units, machines, roles):
+    """Assign units to machines, honouring hardware capabilities.
+
+    roles = {cpu_only: set(), speed: {m: factor}, cpu_central_weight: s,
+             nonfed_to: machine-or-None}. A cpu_only machine (integrated GPU,
+             no CUDA) gets ONLY non-federated runs; its central runs are costed
+             at cpu_central_weight. Federated runs are split across the
+             GPU machines by SPEED-weighted load (a faster GPU, higher speed,
+             takes proportionally more runs). Non-federated runs go to nonfed_to
+             if given (the CPU-only machine), else to the least-loaded machine.
+    Returns {machine: [unit,...]}, effective load (wall-clock-ish seconds)."""
+    cpu_only = set(roles.get("cpu_only", set())) & set(machines)
+    speed = {m: float(roles.get("speed", {}).get(m, 1.0)) for m in machines}
+    cpu_cw = roles.get("cpu_central_weight", 600.0)
+    nonfed_to = roles.get("nonfed_to") if roles.get("nonfed_to") in machines else None
+    gpu_machines = [m for m in machines if m not in cpu_only]
+
     load = {m: 0.0 for m in machines}
     picked = {m: [] for m in machines}
-    helpers = [m for m in machines if m != machines[0]] or machines
-    us = [unit_flags(u, use_rules) for u in units.values()]
+
+    def eff(u, m):
+        """Wall-clock-ish cost of unit u on machine m."""
+        w = u["weight"]
+        if m in cpu_only and u["model"] in ("central_cnn", "central_mlp"):
+            w = cpu_cw                 # central net on CPU is much slower than on a GPU
+        return w / speed[m]
 
     def place(u, eligible):
-        m = min(eligible, key=lambda x: (load[x], machines.index(x)))
+        m = min(eligible, key=lambda x: (load[x] + eff(u, x), machines.index(x)))
         picked[m].append(u)
-        load[m] += u["weight"]
+        u["placed_eff"] = eff(u, m)       # wall-clock-ish cost on its chosen machine
+        load[m] += u["placed_eff"]
 
-    for u in us:                              # step-6 ablation (and its step-7 twins) -> 'me'
-        if u["force_me"]:
-            place(u, [machines[0]])
-    # Place the helper-restricted (step-10) runs before the flexible ones, so the
-    # flexible federated runs are then free to fill the user's machine up to the
-    # helpers' level (otherwise they land on the still-empty helpers first and
-    # leave 'me' underloaded). Longest-first within each group.
-    rest = [u for u in us if not u["force_me"]]
-    rest.sort(key=lambda u: (0 if u["prefer_helper"] else 1, -u["weight"]))
-    for u in rest:
-        eligible = helpers if (u["prefer_helper"] and len(helpers) >= 1) else machines
+    us = list(units.values())
+    nonfed = sorted([u for u in us if not is_fed(u["model"])], key=lambda u: -u["weight"])
+    fed = sorted([u for u in us if is_fed(u["model"])], key=lambda u: -u["weight"])
+
+    # Non-federated (fast, CPU-friendly): to the CPU-only machine when one is
+    # named, else spread over everyone. Seeds stay together because they all land
+    # on the same machine.
+    for u in nonfed:
+        eligible = [nonfed_to] if nonfed_to else machines
         place(u, eligible)
+    # Federated (hours each): GPU machines only, split by speed-weighted load.
+    if not gpu_machines:
+        raise SystemExit("no GPU machine available for the federated runs")
+    for u in fed:
+        place(u, gpu_machines)
     return picked, load
 
 
@@ -142,7 +160,7 @@ def group_series(picked_units):
         s = series.setdefault(skey, {"units": [], "weight": 0.0, "steps": set(),
                                      "dir": u["dir"], "model": u["model"], "fset": u["fset"]})
         s["units"].append(u)
-        s["weight"] += u["weight"]
+        s["weight"] += u.get("placed_eff", u["weight"])     # effective (wall-clock-ish) cost
         s["steps"] |= u["steps"]
     return list(series.values())
 
@@ -171,15 +189,32 @@ def write_shards(shards, out_dir, machines):
             fh.write("\n".join(lines).rstrip() + "\n")
 
 
-def write_split_md(path, shards, load, machines, weights):
+def write_split_md(path, shards, load, machines, weights, roles=None):
+    roles = roles or {}
     h = hours(load)
+    cpu_only = sorted(set(roles.get("cpu_only", set())) & set(machines))
+    speed = roles.get("speed", {})
+    note = []
+    if cpu_only:
+        note.append(f"**{', '.join(cpu_only)}** has an integrated GPU (no CUDA): it runs CPU-only "
+                    f"and is assigned ZERO federated runs (fed_cnn/fed_mlp/FedProx take hours on "
+                    f"CPU). It gets the fast correction-ablation and other non-federated runs "
+                    f"(LightGBM ~1.5 min, central CNN ~{int(roles.get('cpu_central_weight', 600)) // 60} "
+                    f"min on CPU), which fit inside the GPU machines' window as free parallel work.")
+    if speed:
+        note.append("Federated runs are split across the GPU machines by speed ("
+                    + ", ".join(f"{k}×{v:g}" for k, v in speed.items())
+                    + "); the faster GPU takes proportionally more, so the hours below are "
+                      "wall-clock-ish per machine rather than equal run counts.")
     lines = ["# Revision-2 run split across machines", "",
              "Generated by `experiments/make_shards.py`. Each machine runs the run-keys in its",
              "shard file (`experiments/shards/<name>.txt`). Move lines between the files to",
-             "rebalance, then re-check coverage with the smoke test's sharding check.", "",
-             "Measured run times used as weights (seconds): " +
-             ", ".join(f"{k}={int(v)}" for k, v in sorted(weights.items())) + ".", "",
-             "| machine | runs | est. hours |", "| --- | ---: | ---: |"]
+             "rebalance, then re-check coverage with the smoke test's sharding check.", ""]
+    for n in note:
+        lines += [n, ""]
+    lines += ["Base run-time weights (seconds, user's 3050): " +
+              ", ".join(f"{k}={int(v)}" for k, v in sorted(weights.items())) + ".", "",
+              "| machine | runs | est. hours |", "| --- | ---: | ---: |"]
     for m in machines:
         nruns = sum(len(s["units"]) for s in shards[m])
         lines.append(f"| {m} | {nruns} | {h[m]:.1f} |")
@@ -208,8 +243,19 @@ def main(argv=None):
                     help="model=seconds,... overrides (e.g. fed_cnn=2600 for a faster helper GPU)")
     ap.add_argument("--out-dir", default=os.path.join(HERE, "shards"))
     ap.add_argument("--split-md", default=os.path.join(os.path.dirname(HERE), "SPLIT.md"))
+    ap.add_argument("--cpu-only", default="user2",
+                    help="comma-separated machines with no CUDA GPU: they get ONLY "
+                         "non-federated runs. Default 'user2'. Pass '' to disable.")
+    ap.add_argument("--nonfed-to", default="user2",
+                    help="send all non-federated (fast, CPU-friendly) runs to this machine "
+                         "(default 'user2', the integrated-GPU machine). Pass '' to spread them.")
+    ap.add_argument("--speed", default="user1=1.3",
+                    help="machine=factor,... GPU speed for splitting federated runs; a faster "
+                         "GPU (higher factor) takes proportionally more (default user1=1.3 for a 4060)")
+    ap.add_argument("--cpu-central-weight", type=float, default=600.0,
+                    help="seconds for a central CNN/MLP run on a CPU-only machine (~10 min)")
     ap.add_argument("--no-rules", action="store_true",
-                    help="pure balance, ignore the me/helper placement rules")
+                    help="pure balance, ignore the hardware placement rules")
     a = ap.parse_args(argv)
 
     machines = [m.strip() for m in a.machines.split(",") if m.strip()]
@@ -218,11 +264,23 @@ def main(argv=None):
     weights = parse_weights(a.weights)
     done = parse_done(a.done) if a.done else set(DEFAULT_DONE)
 
+    if a.no_rules:
+        roles = {"cpu_only": set(), "speed": {}, "nonfed_to": None,
+                 "cpu_central_weight": a.cpu_central_weight}
+    else:
+        speed = {}
+        for item in (a.speed or "").split(","):
+            if "=" in item:
+                k, v = item.split("="); speed[k.strip()] = float(v)
+        roles = {"cpu_only": {m.strip() for m in a.cpu_only.split(",") if m.strip()},
+                 "speed": speed, "nonfed_to": (a.nonfed_to or None),
+                 "cpu_central_weight": a.cpu_central_weight}
+
     units = build_units(done, weights)
-    picked, load = assign(units, machines, use_rules=not a.no_rules)
+    picked, load = assign(units, machines, roles)
     shards = {m: group_series(picked[m]) for m in machines}
     write_shards(shards, a.out_dir, machines)
-    write_split_md(a.split_md, shards, load, machines, weights)
+    write_split_md(a.split_md, shards, load, machines, weights, roles)
 
     # coverage self-check: shards partition the remaining run-keys exactly
     assigned = set()

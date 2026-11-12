@@ -56,7 +56,15 @@ def main():
             split.append((d, rid, sorted(owners)))
     assert not split, f"output files split across machines: {split}"
 
+    # a CPU-only machine (user2: integrated GPU) must have ZERO federated runs
+    cpu_only = [m for m in machines if m == "user2"]
+    for m in cpu_only:
+        fed = [k for k in shards[m] if k.split(":")[1].startswith("fed")]
+        assert not fed, f"CPU-only machine {m} has federated run-keys: {fed[:5]}"
+
     per = {m: len(shards[m]) for m in machines}
+    if cpu_only:
+        print("  (CPU-only " + ", ".join(cpu_only) + ": 0 federated runs, as required)")
     print(f"SHARDS OK: {len(remaining)} remaining run-keys = disjoint union of "
           + " + ".join(f"{m}:{per[m]}" for m in machines)
           + f"; {sum(1 for v in by_file.values() if len(v) > 1)} shared output(s) kept together")
