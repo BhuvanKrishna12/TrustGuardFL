@@ -36,7 +36,14 @@ if ! python3 "$CODE/experiments/verify_cache.py" --work "$W"; then
   exit 1
 fi
 
-mkdir -p "$OUT"
+mkdir -p "$OUT" 2>/dev/null
+# the destination must really be writable (an unmounted drive fails here)
+if ! ( touch "$OUT/.w_test" 2>/dev/null && rm -f "$OUT/.w_test" ); then
+  echo "ERROR: cannot write to $OUT (drive disconnected? run 'ls /mnt/d'; if 'No such device',"
+  echo "       run 'wsl --shutdown' in PowerShell, reopen WSL, reconnect the drive)."
+  echo "       Nothing was copied. Tip: build on the WSL disk instead:  bash make_share.sh ~/rev2_share"
+  exit 3
+fi
 
 # 1. code -> OUT/rev2 (same exclusions as the release zip; keeps experiments/shards/*.txt)
 echo "  copying code -> $OUT/rev2"
@@ -66,6 +73,13 @@ cp -f "$W/holdout_sample_mv.csv" "$OUT/holdout_sample_mv.csv"
 [ -f "$OUT/MY_SHARD" ] || echo user1 > "$OUT/MY_SHARD"
 cp -f "$CODE/SHARE_README.md" "$OUT/SHARE_README.md" 2>/dev/null || \
   cp -f "$REPO/SHARE_README.md" "$OUT/SHARE_README.md" 2>/dev/null || true
+
+# verify what was written
+for f in rev2/run_revision2.sh cache/input_manifest.json holdout_sample_mv.csv MY_SHARD; do
+  [ -s "$OUT/$f" ] || { echo "ERROR: $OUT/$f missing or empty; share is NOT complete"; exit 4; }
+done
+[ "$(du -sk "$W/holdout_sample_mv.csv" | cut -f1)" = "$(du -sk "$OUT/holdout_sample_mv.csv" | cut -f1)" ] || \
+  { echo "ERROR: holdout copy size differs; share is NOT complete"; exit 4; }
 
 SIZE="$(du -sh "$OUT" 2>/dev/null | cut -f1)"
 echo "DONE. Share is $SIZE at $OUT"
