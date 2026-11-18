@@ -106,7 +106,7 @@ Keep six cells. `NAMES` is optional (an unknown cell is shown as "Cell 4_0"). If
 fewer than 50 rows of an attack type, the prepare step borrows rows of that type from the
 other regions so the inject button still works; the table shows these as "borrowed".
 
-## Demo script for your mentor (about 5 minutes)
+## Suggested demo walkthrough (about 5 minutes)
 
 Rehearse it once the day before, on the real data, so you know the numbers you will see.
 
