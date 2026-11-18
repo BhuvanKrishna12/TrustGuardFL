@@ -1,0 +1,19 @@
+# Extra packages for the FL-IDS live demo, on top of the project's existing
+# torch / pandas / scikit-learn / joblib / matplotlib install.
+# Install:  pip3 install --user --break-system-packages -r demo/requirements-demo.txt
+#
+# flwr 1.35.0 is the version federated_simulation_flower.py was written against.
+# Its legacy fl.simulation.start_simulation still runs (deprecated since 1.13,
+# prints a warning, but works). It pins ray 2.55.1 for Python 3.11 to 3.14.
+# Older releases do not work on Python 3.12: flwr 1.13 pins ray only below 3.12.
+# flwr also hard-pins its own fastapi / uvicorn / starlette ranges, so the
+# server's web stack is pinned to the versions flwr accepts, to avoid pip
+# downgrading or breaking one or the other.
+
+# train_demo.py
+flwr[simulation]==1.35.0
+ray==2.55.1
+
+# demo/server.py (versions chosen to satisfy flwr 1.35.0's own pins)
+fastapi==0.138.2
+uvicorn[standard]==0.49.0

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flight Strip Board</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Roboto+Slab:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8a3b12}a:hover{color:#5c2408}
+.wood{background:repeating-linear-gradient(91deg,rgba(255,236,200,.045) 0 2px,rgba(0,0,0,.06) 2px 4px,transparent 4px 11px),linear-gradient(180deg,#5d3b22,#4a2d18);}
+.rack{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;padding:8px;box-sizing:border-box;border-radius:6px;box-shadow:inset 0 0 0 2px #3a2312,inset 0 2px 0 rgba(255,230,190,.18),0 2px 0 #2e1b0d,0 6px 10px rgba(60,40,20,.28);}
+.placard{position:relative;background:radial-gradient(rgba(120,90,50,.10) 1px,transparent 1.3px) 0 0/5px 5px,#e3d3ad;border:1px solid #a88d5c;box-shadow:0 2px 0 #2e1b0d;padding:8px 7px 7px;display:flex;flex-direction:column;gap:3px;color:#2b1d0e;font-family:'Roboto Slab',serif;box-sizing:border-box;}
+.screw{position:absolute;top:3px;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d8c49a,#6b5a3a);}
+.bay{background:repeating-linear-gradient(180deg,transparent 0 32px,rgba(0,0,0,.35) 32px 33px,rgba(255,230,190,.10) 33px 36px) 0 5px/100% 100% no-repeat,#2e1c0f;padding:5px;display:flex;flex-direction:column;gap:4px;border-radius:2px;box-shadow:inset 0 2px 4px rgba(0,0,0,.6),inset 2px 0 0 #1f1209,inset -2px 0 0 #1f1209;box-sizing:border-box;}
+.strip{position:relative;display:grid;grid-template-columns:54px 44px minmax(0,1fr) 36px;height:32px;flex:0 0 32px;background:linear-gradient(180deg,#fbf6ea,#f1e7cf);border:1px solid #b89c6c;box-shadow:0 1px 0 #1a0e05,0 2px 3px rgba(0,0,0,.35);font-family:'Courier Prime',monospace;font-size:10.5px;color:#2b1d0e;box-sizing:border-box;}
+.strip.alert{background:linear-gradient(180deg,#f2e0b4,#e6cf9a);}
+.c{display:flex;align-items:center;padding:0 3px;border-right:1px solid #c7ad7d;white-space:nowrap;overflow:hidden;}
+.c:last-of-type{border-right:0;}
+.ben{color:#5c4a2e;}
+.pencil{background:linear-gradient(176deg,transparent 20%,rgba(217,138,28,.58) 23%,rgba(217,138,28,.5) 77%,transparent 80%);font-weight:700;color:#5a120c;}
+.pencil-fa{background:repeating-linear-gradient(135deg,rgba(217,138,28,.38) 0 3px,rgba(217,138,28,.16) 3px 6px);font-weight:700;color:#5a120c;flex-direction:column;align-items:flex-start;justify-content:center;line-height:1.05;}
+.stamp{position:absolute;font-family:'Bebas Neue',sans-serif;color:#b3261e;border:2px solid #b3261e;background:rgba(250,244,230,.9);padding:2px 4px 0;line-height:1;letter-spacing:.06em;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(179,38,30,.3),0 0 0 1px rgba(179,38,30,.15);transform:rotate(-8deg);z-index:2;text-align:center;white-space:nowrap;}
+.empty{flex:0 0 32px;height:32px;border:1px dashed rgba(241,230,204,.28);box-sizing:border-box;}
+.cnt{display:flex;justify-content:space-between;align-items:baseline;font-size:8.5px;font-weight:600;letter-spacing:.05em;color:#4a3a22;border-bottom:1px dotted #a88d5c;padding-bottom:1px;}
+.cnt b{font-family:'Courier Prime',monospace;font-size:10.5px;font-weight:700;color:#2b1d0e;letter-spacing:0;}
+.chip{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.06em;line-height:1;padding:3px 5px 1px;border:1.5px solid #3f5121;color:#3f5121;border-radius:2px;align-self:flex-start;}
+.quip{font-family:'Courier Prime',monospace;font-style:italic;font-size:9.5px;line-height:1.2;color:#4a3a22;margin-top:auto;}
+.log td{padding:0 8px;height:27px;border-bottom:1px solid #cdb68a;white-space:nowrap;}
+.log th{padding:0 8px;height:22px;text-align:left;font-family:'Roboto Slab',serif;font-weight:700;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:#4a3a22;border-bottom:2px solid #6b4423;}
+.ok{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.06em;padding:2px 6px 0;border:1.5px solid #3f5121;color:#3f5121;border-radius:2px;transform:rotate(-2deg);}
+.fa{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.06em;padding:2px 6px 0;border:1.5px solid #b3261e;color:#a3221b;border-radius:2px;transform:rotate(-3deg);background:rgba(217,138,28,.18);}
+.rad{display:flex;align-items:center;gap:6px;font-family:'Courier Prime',monospace;font-size:12px;color:#2b1d0e;height:22px;}
+.rad input{accent-color:#9e2018;margin:0;width:14px;height:14px;}
+.lead{flex:1;border-bottom:1px dotted #a88d5c;transform:translateY(3px);}
+.flabel{font-family:'Roboto Slab',serif;font-weight:700;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#4a3a22;}
+.rack.hot{position:relative;grid-template-columns:96px minmax(0,1fr);background:repeating-linear-gradient(91deg,rgba(255,220,200,.06) 0 2px,rgba(0,0,0,.07) 2px 4px,transparent 4px 11px),linear-gradient(180deg,#c42f22,#b3261e);box-shadow:inset 0 0 0 3px #d9481f,inset 0 0 0 5px #7a160f,0 0 0 4px #f2c14e,0 0 0 8px #b3261e,0 10px 24px rgba(120,20,10,.35);}
+.hazard{position:absolute;left:0;right:0;top:-3px;height:15px;background:repeating-linear-gradient(45deg,#1f1a14 0 8px,#e8a317 8px 16px);border-radius:6px 6px 0 0;box-shadow:0 1px 0 #5a120c;z-index:3;display:flex;align-items:center;justify-content:flex-end;gap:6px;padding-right:12px;box-sizing:border-box;}
+.hazard b{display:inline-flex;align-items:center;gap:4px;background:#fbf3e1;color:#1f1a14;font-family:'Roboto Slab',serif;font-size:8.5px;font-weight:700;letter-spacing:.14em;line-height:10px;padding:1px 7px;border-radius:7px;border:1px solid #1f1a14;}
+.lamp{display:inline-block;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb199,#e0341f 50%,#8f1d15);box-shadow:0 0 0 1.5px #5a120c,0 0 6px 2px rgba(224,52,31,.65);}
+.strip.hot{background:linear-gradient(180deg,#c0321f,#a8231b);border-color:#6e1510;color:#fbf3e1;box-shadow:0 1px 0 #1a0e05,0 0 0 1px rgba(232,163,23,.55),0 2px 4px rgba(0,0,0,.45);}
+.strip.hot .c{border-right-color:rgba(251,243,225,.3);}
+.pencil-hot{background:linear-gradient(176deg,transparent 5%,#e8a317 8%,#f2b632 50%,#e8a317 92%,transparent 95%);font-weight:700;color:#1f1a14;}
+.strip.hot .stamp{font-size:18px;border-width:2.5px;top:3px;right:4px;background:#fbf3e1;}
+.stamp-big{position:absolute;top:-6px;right:-14px;font-size:22px;letter-spacing:.04em;padding:4px 5px 1px;border:4px double #9e2018;color:#9e2018;background:rgba(251,243,225,.95);transform:rotate(-10deg);z-index:4;box-shadow:0 0 0 1px rgba(158,32,24,.35),0 3px 6px rgba(90,18,12,.3);}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; padding: 14px; display: flex; flex-direction: column; gap: 10px; font-family: 'Roboto Slab', serif; color: #2b1d0e; background: radial-gradient(rgba(120,90,50,.08) 1px, transparent 1.3px) 0 0/6px 6px, linear-gradient(180deg, #f1e9d6, #e9dec5);">
+
+  <header style="height: 58px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; border-bottom: 3px double #6b4423; padding-bottom: 6px; box-sizing: border-box;">
+    <div style="display: flex; align-items: flex-end; gap: 14px;">
+      <h1 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 46px; line-height: .9; letter-spacing: .02em; color: #3a2312;">FL-IDS <span style="color: #9e2018;">Live Detection</span></h1>
+      <div style="display: flex; flex-direction: column; gap: 2px; padding-bottom: 2px;">
+        <span style="font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: .14em; color: #4a3a22;">Strip board | all towers</span>
+        <span style="font-family: 'Courier Prime', monospace; font-style: italic; font-size: 13px; color: #4a3a22;">Six towers. One model. Zero chill.</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="font-family: 'Courier Prime', monospace; font-size: 12px; color: #2b1d0e; background: #f6efdf; border: 1px solid #b89c6c; padding: 6px 10px; box-shadow: 0 2px 0 #c9b48a;">Global model: federated CNN, round 46 &nbsp;|&nbsp; Replay: 2019-02-04 &nbsp;|&nbsp; Correction strength 0.5</div>
+      <div class="wood" style="color: #f1e6cc; font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: .08em; padding: 5px 10px 2px; border-radius: 4px; box-shadow: inset 0 0 0 2px #3a2312;">14:32:07<span style="font-size: 13px; margin-left: 4px;">Z</span></div>
+    </div>
+  </header>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; height: 804px;">
+
+    <div style="display: flex; flex-direction: column; gap: 10px; min-width: 0;">
+
+      <section aria-label="Client racks" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: 238px 238px; gap: 10px;">
+
+        <!-- C1 -->
+        <div class="rack wood">
+          <div class="placard">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: .9; color: #3a2312;">C1</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase;">US Midwest</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell 4_-10</span>
+            <span class="chip" style="margin: 2px 0 4px;">Normal</span>
+            <span class="cnt">SEEN <b>18,402</b></span>
+            <span class="cnt">FLAGGED <b>211</b></span>
+            <span class="cnt">CORRECT <b>194</b></span>
+            <span class="cnt">FALSE ALM <b>17</b></span>
+            <span class="quip">Roger, all benign.</span>
+          </div>
+          <div class="bay">
+            <div class="strip"><span class="c">14:32:07</span><span class="c">a4b2e1</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:06</span><span class="c">a0f3c7</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:05</span><span class="c">ab12d9</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:04</span><span class="c">a7c3f0</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:02</span><span class="c">a2e9b4</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+        <!-- C2 -->
+        <div class="rack hot">
+          <div class="hazard" aria-hidden="true"><b style="color: #9e2018;"><span class="lamp" style="width: 7px; height: 7px;"></span>LIVE</b><b>ATTACK IN PROGRESS</b></div>
+          <div class="placard" style="background: radial-gradient(rgba(150,60,40,.10) 1px, transparent 1.3px) 0 0/5px 5px, #f8d9cf; border-color: #c4553a; box-shadow: 0 2px 0 #5a120c;">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: .9; color: #9e2018;">C2</span>
+            <span class="stamp stamp-big">Under<br>attack</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase; margin-top: 17px;">Central Europe</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell 5_1</span>
+            <span class="cnt" style="border-bottom-color: #c4553a;">SEEN <b>16,957</b></span>
+            <span class="cnt" style="border-bottom-color: #c4553a; color: #7a160f;">FLAGGED <b style="font-size: 15px; color: #9e2018;">486</b></span>
+            <span class="cnt" style="border-bottom-color: #c4553a; color: #7a160f;">CORRECT <b style="font-size: 15px; color: #9e2018;">471</b></span>
+            <span class="cnt" style="border-bottom-color: #c4553a;">FALSE ALM <b>15</b></span>
+            <span class="quip" style="color: #5a120c;">Mayday. Ghosts in the pattern.</span>
+          </div>
+          <div class="bay" style="background: repeating-linear-gradient(180deg, transparent 0 32px, rgba(0,0,0,.35) 32px 33px, rgba(255,200,170,.12) 33px 36px) 0 5px/100% 100% no-repeat, #4d1a10;">
+            <div class="strip hot"><span class="c">14:32:07</span><span class="c">f3a91c</span><span class="c pencil-hot">ghost_aircraft</span><span class="c"></span><span class="stamp">GHOST</span></div>
+            <div class="strip hot"><span class="c">14:32:07</span><span class="c">f7c204</span><span class="c pencil-hot">ghost_aircraft</span><span class="c"></span><span class="stamp" style="transform: rotate(-11deg);">GHOST</span></div>
+            <div class="strip hot"><span class="c">14:32:06</span><span class="c">fb18e0</span><span class="c pencil-hot">ghost_aircraft</span><span class="c"></span><span class="stamp" style="transform: rotate(-6deg);">GHOST</span></div>
+            <div class="strip"><span class="c">14:32:05</span><span class="c">3c6444</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:05</span><span class="c">3c49ce</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip hot"><span class="c">14:32:04</span><span class="c">f09d73</span><span class="c pencil-hot">ghost_aircraft</span><span class="c"></span><span class="stamp" style="transform: rotate(-9deg);">GHOST</span></div>
+          </div>
+        </div>
+
+        <!-- C3 -->
+        <div class="rack wood">
+          <div class="placard">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: .9; color: #3a2312;">C3</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase;">US Southeast</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell 3_-9</span>
+            <span class="chip" style="margin: 2px 0 4px;">Normal</span>
+            <span class="cnt">SEEN <b>19,880</b></span>
+            <span class="cnt">FLAGGED <b>233</b></span>
+            <span class="cnt">CORRECT <b>219</b></span>
+            <span class="cnt">FALSE ALM <b>14</b></span>
+            <span class="quip">Copy. Nothing to report, honest.</span>
+          </div>
+          <div class="bay">
+            <div class="strip"><span class="c">14:32:07</span><span class="c">a51d3e</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:06</span><span class="c">ad40b2</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:05</span><span class="c">a9e7c1</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:03</span><span class="c">a33f08</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:01</span><span class="c">ac6b9d</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+        <!-- C4 -->
+        <div class="rack wood">
+          <div class="placard">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: .9; color: #3a2312;">C4</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase;">Malay Peninsula</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell 0_10</span>
+            <span class="chip" style="margin: 2px 0 4px;">Normal</span>
+            <span class="cnt">SEEN <b>11,315</b></span>
+            <span class="cnt">FLAGGED <b>129</b></span>
+            <span class="cnt">CORRECT <b>118</b></span>
+            <span class="cnt">FALSE ALM <b>11</b></span>
+            <span class="quip">Tower, standing by.</span>
+          </div>
+          <div class="bay">
+            <div class="strip"><span class="c">14:32:06</span><span class="c">750412</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:04</span><span class="c">76ce88</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:01</span><span class="c">7503a9</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:31:57</span><span class="c">76c4f1</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="empty" style="display: flex; align-items: center; justify-content: center; font-family: 'Courier Prime', monospace; font-style: italic; font-size: 9.5px; color: #f1e6cc;">Negative contact. Suspiciously quiet.</div>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+        <!-- C5 -->
+        <div class="rack wood">
+          <div class="placard">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: .9; color: #3a2312;">C5</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase;">SE Australia</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell -4_14</span>
+            <span class="chip" style="margin: 2px 0 4px; border-color: #b3261e; color: #9e2018; background: rgba(217,138,28,.22);">1 alert: velocity</span>
+            <span class="cnt">SEEN <b>9,742</b></span>
+            <span class="cnt">FLAGGED <b>104</b></span>
+            <span class="cnt">CORRECT <b>97</b></span>
+            <span class="cnt">FALSE ALM <b>7</b></span>
+            <span class="quip">Say again your airspeed?</span>
+          </div>
+          <div class="bay">
+            <div class="strip alert"><span class="c">14:32:06</span><span class="c">7c806e</span><span class="c pencil">velocity_spoof</span><span class="c"></span><span class="stamp" style="right: 1px; top: 7px; font-size: 13px; transform: rotate(-7deg);">VELOCITY?</span></div>
+            <div class="strip"><span class="c">14:32:05</span><span class="c">7c42d1</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:03</span><span class="c">7c6b2a</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:00</span><span class="c">7c7f19</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="empty"></div>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+        <!-- C6 -->
+        <div class="rack wood" style="box-shadow: inset 0 0 0 2px #3a2312, inset 0 0 0 4px #c98a1a, inset 0 2px 0 rgba(255,230,190,.18), 0 0 0 2px #d99a1f, 0 2px 0 #2e1b0d, 0 6px 10px rgba(60,40,20,.28);">
+          <div class="placard">
+            <span class="screw" style="left: 3px;"></span><span class="screw" style="right: 3px;"></span>
+            <span style="font-family: 'Bebas Neue', sans-serif; font-size: 32px; line-height: .9; color: #3a2312;">C6</span>
+            <span style="font-size: 10.5px; font-weight: 700; line-height: 1.15; text-transform: uppercase;">Gulf of Alaska</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 10px; color: #4a3a22;">cell 5_-14</span>
+            <span class="chip" style="margin: 2px 0 1px; border-color: #8a5a12; color: #3a2408; background: #f2c14e;">Noisy</span>
+            <span style="font-family: 'Courier Prime', monospace; font-size: 9px; color: #4a3a22; margin-bottom: 2px;">local acc 0.33</span>
+            <span class="cnt">SEEN <b>6,108</b></span>
+            <span class="cnt">FLAGGED <b>97</b></span>
+            <span class="cnt">CORRECT <b>52</b></span>
+            <span class="cnt">FALSE ALM <b>45</b></span>
+            <span class="quip">Seeing things. Disregard.</span>
+          </div>
+          <div class="bay">
+            <div class="strip alert" style="background: linear-gradient(180deg, #f6ecd2, #ecdcb4);"><span class="c">14:32:06</span><span class="c">a8f2c0</span><span class="c pencil-fa">replay<small style="font-size: 8.5px; font-weight: 400; color: #3a2a14;">truth: benign</small></span><span class="c"></span><span class="stamp" style="right: 1px; top: 2px; font-size: 13px; transform: rotate(-10deg);">OOPS<span style="display: block; font-size: 8.5px; letter-spacing: .04em;">(FALSE ALARM)</span></span></div>
+            <div class="strip"><span class="c">14:32:04</span><span class="c">a6d031</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip"><span class="c">14:32:02</span><span class="c">a3b77e</span><span class="c ben">benign</span><span class="c"></span></div>
+            <div class="strip alert" style="background: linear-gradient(180deg, #f6ecd2, #ecdcb4);"><span class="c">14:31:58</span><span class="c">ac1d55</span><span class="c pencil-fa">flooding<small style="font-size: 8.5px; font-weight: 400; color: #3a2a14;">truth: benign</small></span><span class="c"></span><span class="stamp" style="right: 2px; top: 2px; font-size: 13px; transform: rotate(-7deg);">OOPS<span style="display: block; font-size: 8.5px; letter-spacing: .04em;">(FALSE ALARM)</span></span></div>
+            <div class="empty"></div>
+            <div class="empty"></div>
+          </div>
+        </div>
+
+      </section>
+
+      <div style="display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; height: 308px;">
+
+        <section aria-label="Incident log" style="background: repeating-linear-gradient(180deg, transparent 0 26px, rgba(107,68,35,.08) 26px 27px), #f6efdf; border: 1px solid #b89c6c; box-shadow: 0 2px 0 #c9b48a, 0 6px 10px rgba(60,40,20,.15); padding: 10px 14px 10px 30px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; gap: 6px;">
+          <div aria-hidden="true" style="position: absolute; left: 22px; top: 0; bottom: 0; width: 1px; background: #c76a5e;"></div>
+          <div aria-hidden="true" style="position: absolute; left: 8px; top: 40px; display: flex; flex-direction: column; gap: 70px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #e9dec5; box-shadow: inset 0 1px 2px rgba(0,0,0,.4);"></span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #e9dec5; box-shadow: inset 0 1px 2px rgba(0,0,0,.4);"></span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #e9dec5; box-shadow: inset 0 1px 2px rgba(0,0,0,.4);"></span>
+          </div>
+          <div style="display: flex; align-items: baseline; justify-content: space-between;">
+            <h2 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 24px; letter-spacing: .06em; color: #3a2312;">Incident log <span style="font-size: 15px; color: #4a3a22; letter-spacing: .1em;">| supervisor's book</span></h2>
+            <span style="font-family: 'Courier Prime', monospace; font-style: italic; font-size: 11px; color: #4a3a22;">Newest on top, per the regs. 8 entries.</span>
+          </div>
+          <table class="log" style="width: 100%; border-collapse: collapse; font-family: 'Courier Prime', monospace; font-size: 12px; color: #2b1d0e;">
+            <thead>
+              <tr><th>Time</th><th>Client</th><th>Attack type</th><th>Confidence</th><th>icao24</th><th>Verdict</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>14:32:07</td><td>C2 Central Europe</td><td style="font-weight: 700; color: #5a120c;">ghost_aircraft</td><td>0.99</td><td>f3a91c</td><td><span class="ok">correct catch</span></td></tr>
+              <tr><td>14:32:07</td><td>C2 Central Europe</td><td style="font-weight: 700; color: #5a120c;">ghost_aircraft</td><td>0.99</td><td>f7c204</td><td><span class="ok">correct catch</span></td></tr>
+              <tr><td>14:32:06</td><td>C5 SE Australia</td><td style="font-weight: 700; color: #5a120c;">velocity_spoof</td><td>0.91</td><td>7c806e</td><td><span class="ok">correct catch</span></td></tr>
+              <tr style="background: repeating-linear-gradient(135deg, rgba(217,138,28,.12) 0 4px, transparent 4px 8px);"><td>14:32:06</td><td>C6 Gulf of Alaska</td><td style="font-weight: 700; color: #5a120c;">replay</td><td>0.58</td><td>a8f2c0</td><td><span class="fa">false alarm</span></td></tr>
+              <tr><td>14:32:06</td><td>C2 Central Europe</td><td style="font-weight: 700; color: #5a120c;">ghost_aircraft</td><td>0.98</td><td>fb18e0</td><td><span class="ok">correct catch</span></td></tr>
+              <tr><td>14:32:04</td><td>C2 Central Europe</td><td style="font-weight: 700; color: #5a120c;">ghost_aircraft</td><td>0.99</td><td>f09d73</td><td><span class="ok">correct catch</span></td></tr>
+              <tr style="background: repeating-linear-gradient(135deg, rgba(217,138,28,.12) 0 4px, transparent 4px 8px);"><td>14:31:58</td><td>C6 Gulf of Alaska</td><td style="font-weight: 700; color: #5a120c;">flooding</td><td>0.54</td><td>ac1d55</td><td><span class="fa">false alarm</span></td></tr>
+              <tr><td>14:31:51</td><td>C3 US Southeast</td><td style="font-weight: 700; color: #5a120c;">gps_spoof</td><td>0.87</td><td>a61c90</td><td><span class="ok">correct catch</span></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section aria-label="Stamp key" style="background: radial-gradient(rgba(120,90,50,.10) 1px, transparent 1.3px) 0 0/5px 5px, #e3d3ad; border: 1px solid #a88d5c; box-shadow: 0 2px 0 #a88d5c, 0 6px 10px rgba(60,40,20,.15); padding: 10px 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px;">
+          <h2 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 22px; letter-spacing: .06em; color: #3a2312;">Stamp key</h2>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px;">
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 15px;">GHOST</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">ghost_aircraft</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 15px; transform: rotate(-11deg);">SPOOFED</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">gps_spoof</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 15px; transform: rotate(-6deg);">VELOCITY?</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">velocity_spoof</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 15px; transform: rotate(-9deg);">REPLAYED</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">replay</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 15px; transform: rotate(-7deg);">FLOODED</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">flooding</span></div>
+            <div style="display: flex; flex-direction: column; gap: 4px;"><span class="stamp" style="position: static; align-self: flex-start; font-size: 13px; transform: rotate(-10deg);">OOPS (FALSE ALARM)</span><span style="font-family: 'Courier Prime', monospace; font-size: 11px;">truth was benign</span></div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; font-family: 'Courier Prime', monospace; font-size: 11px; color: #2b1d0e;">
+            <span aria-hidden="true" style="width: 34px; height: 12px; background: linear-gradient(176deg, transparent 15%, rgba(217,138,28,.7) 20%, rgba(217,138,28,.6) 80%, transparent 85%);"></span>
+            grease pencil = model flagged it
+          </div>
+          <div style="margin-top: auto; border-top: 1px solid #a88d5c; padding-top: 6px; font-family: 'Courier Prime', monospace; font-size: 10.5px; color: #3a2a14;">6 clients | 44.3 KB per model update | Federated with Flower</div>
+        </section>
+
+      </div>
+    </div>
+
+    <aside aria-label="Inject attack" style="position: relative; border-radius: 14px; padding: 34px 12px 12px; box-sizing: border-box; background: radial-gradient(rgba(0,0,0,.12) 1px, transparent 1.5px) 0 0/5px 5px, linear-gradient(180deg, #84562f, #6e4526); box-shadow: inset 0 0 0 2px #4a2d18, 0 3px 0 #3a2312, 0 8px 16px rgba(60,40,20,.3);">
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 8px; transform: translateX(-50%); width: 132px; height: 34px; border-radius: 7px 7px 10px 10px; background: linear-gradient(180deg, #a8946a, #6b5a3a 55%, #4d3f27); box-shadow: inset 0 1px 0 rgba(255,245,220,.5), 0 3px 4px rgba(0,0,0,.4); z-index: 3;">
+        <div style="position: absolute; left: 50%; top: 9px; transform: translateX(-50%); width: 40px; height: 12px; border-radius: 6px; background: #3a2f1c; box-shadow: inset 0 2px 3px rgba(0,0,0,.6);"></div>
+      </div>
+      <form style="height: 100%; box-sizing: border-box; background: repeating-linear-gradient(180deg, transparent 0 23px, rgba(107,68,35,.07) 23px 24px), #f6efdf; box-shadow: 0 1px 0 #b89c6c, 0 3px 6px rgba(0,0,0,.3); padding: 22px 14px 12px; display: flex; flex-direction: column; gap: 10px; margin: 0;">
+        <div style="display: flex; flex-direction: column; gap: 1px; border-bottom: 2px solid #3a2312; padding-bottom: 6px;">
+          <span style="font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: .1em; color: #4a3a22;">FORM INJ-25 | MISCHIEF DESK</span>
+          <h2 style="margin: 0; font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 30px; line-height: 1; letter-spacing: .04em; color: #3a2312;">Inject attack</h2>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 3px;">
+          <label for="target" class="flabel">Target client</label>
+          <select id="target" style="font-family: 'Courier Prime', monospace; font-size: 13px; font-weight: 700; color: #2b1d0e; background: #fbf6ea; border: 1.5px solid #6b4423; border-radius: 2px; padding: 5px 6px; accent-color: #9e2018;">
+            <option>C1 US Midwest</option>
+            <option selected>C2 Central Europe</option>
+            <option>C3 US Southeast</option>
+            <option>C4 Malay Peninsula</option>
+            <option>C5 SE Australia</option>
+            <option>C6 Gulf of Alaska</option>
+          </select>
+        </div>
+
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0;">
+          <legend class="flabel" style="padding: 0; margin-bottom: 3px;">Attack type</legend>
+          <label class="rad"><input type="radio" name="atk" value="gps_spoof">gps_spoof<span class="lead"></span><span style="font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #9e2018;">SPOOFED</span></label>
+          <label class="rad"><input type="radio" name="atk" value="velocity_spoof">velocity_spoof<span class="lead"></span><span style="font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #9e2018;">VELOCITY?</span></label>
+          <label class="rad"><input type="radio" name="atk" value="replay">replay<span class="lead"></span><span style="font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #9e2018;">REPLAYED</span></label>
+          <label class="rad" style="background: linear-gradient(176deg, transparent 18%, rgba(217,138,28,.45) 22%, rgba(217,138,28,.4) 78%, transparent 82%); font-weight: 700;"><input type="radio" name="atk" value="ghost_aircraft" checked>ghost_aircraft<span class="lead"></span><span style="font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #9e2018;">GHOST</span></label>
+          <label class="rad"><input type="radio" name="atk" value="flooding">flooding<span class="lead"></span><span style="font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: #9e2018;">FLOODED</span></label>
+        </fieldset>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <label for="burst" class="flabel">Burst size</label>
+          <div style="display: flex; align-items: stretch; border: 1.5px solid #6b4423; border-radius: 2px; background: #fbf6ea;">
+            <button type="button" aria-label="Decrease burst size" style="width: 28px; border: 0; border-right: 1px solid #6b4423; background: #e3d3ad; font-family: 'Courier Prime', monospace; font-size: 15px; font-weight: 700; color: #2b1d0e; cursor: pointer;">-</button>
+            <input id="burst" type="number" value="25" min="1" max="500" style="width: 52px; border: 0; background: transparent; text-align: center; font-family: 'Courier Prime', monospace; font-size: 15px; font-weight: 700; color: #2b1d0e; padding: 4px 0;">
+            <button type="button" aria-label="Increase burst size" style="width: 28px; border: 0; border-left: 1px solid #6b4423; background: #e3d3ad; font-family: 'Courier Prime', monospace; font-size: 15px; font-weight: 700; color: #2b1d0e; cursor: pointer;">+</button>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 5px; background: #e3d3ad; border: 1px solid #a88d5c; padding: 8px; box-shadow: inset 0 1px 3px rgba(60,40,20,.25);">
+          <div style="display: flex; align-items: stretch; gap: 10px;">
+            <div aria-hidden="true" style="position: relative; width: 40px; height: 92px; flex: 0 0 40px;">
+              <div style="position: absolute; left: 14px; top: 6px; width: 12px; height: 80px; border-radius: 6px; background: #2e1c0f; box-shadow: inset 0 2px 4px rgba(0,0,0,.7), 0 0 0 3px #6b5a3a;"></div>
+              <div style="position: absolute; left: 17px; top: 14px; width: 6px; height: 44px; border-radius: 3px; background: linear-gradient(90deg, #8c7a55, #d8c49a, #6b5a3a);"></div>
+              <div style="position: absolute; left: 6px; top: 0; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e0645a, #b3261e 55%, #6e1510); box-shadow: 0 3px 3px rgba(0,0,0,.4);"></div>
+            </div>
+            <button type="submit" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 2px solid #5a120c; border-radius: 6px; background: linear-gradient(180deg, #b52c22, #8f1d15); color: #fbf3e1; box-shadow: inset 0 1px 0 rgba(255,220,200,.35), 0 4px 0 #5a120c, 0 6px 8px rgba(0,0,0,.3); cursor: pointer; padding: 6px 4px; margin-bottom: 4px;">
+              <span style="font-family: 'Bebas Neue', sans-serif; font-size: 30px; line-height: .95; letter-spacing: .06em;">Pull to inject</span>
+              <span style="font-family: 'Courier Prime', monospace; font-size: 11px;">ghost_aircraft x25 at C2</span>
+            </button>
+          </div>
+          <span style="font-family: 'Courier Prime', monospace; font-style: italic; font-size: 10.5px; line-height: 1.25; color: #3a2a14;">Mischief Desk: authorised personnel and chaos goblins only</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px; border-top: 2px solid #3a2312; padding-top: 6px;">
+          <span class="flabel">Correction strength</span>
+          <div aria-hidden="true" style="position: relative; width: 170px; height: 126px; margin: 0 auto;">
+            <span style="position: absolute; left: 23px; top: 40px; transform: translate(-50%, -50%); font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #3a2312;">0</span>
+            <span style="position: absolute; left: 85px; top: 6px; transform: translate(-50%, -50%); font-family: 'Bebas Neue', sans-serif; font-size: 17px; color: #9e2018;">0.5</span>
+            <span style="position: absolute; left: 147px; top: 40px; transform: translate(-50%, -50%); font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #3a2312;">1.0</span>
+            <div style="position: absolute; left: 85px; top: 76px; width: 0; height: 0;">
+              <span style="position: absolute; left: -1px; top: -62px; width: 2px; height: 9px; background: #3a2312; transform-origin: 1px 62px; transform: rotate(-60deg);"></span>
+              <span style="position: absolute; left: -1px; top: -60px; width: 2px; height: 5px; background: #6b4423; transform-origin: 1px 60px; transform: rotate(-30deg);"></span>
+              <span style="position: absolute; left: -1.5px; top: -63px; width: 3px; height: 11px; background: #9e2018; transform-origin: 1.5px 63px; transform: rotate(0deg);"></span>
+              <span style="position: absolute; left: -1px; top: -60px; width: 2px; height: 5px; background: #6b4423; transform-origin: 1px 60px; transform: rotate(30deg);"></span>
+              <span style="position: absolute; left: -1px; top: -62px; width: 2px; height: 9px; background: #3a2312; transform-origin: 1px 62px; transform: rotate(60deg);"></span>
+            </div>
+            <div style="position: absolute; left: 37px; top: 28px; width: 96px; height: 96px; border-radius: 50%; background: repeating-conic-gradient(rgba(0,0,0,.18) 0 5deg, transparent 5deg 10deg), radial-gradient(circle at 38% 30%, #8a5a34, #4a2d18 60%, #2e1b0d); box-shadow: 0 0 0 4px #c9b07c, 0 0 0 5px #8a6a3a, 0 4px 6px rgba(0,0,0,.4);">
+              <div style="position: absolute; left: 18px; top: 18px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 40% 32%, #7a4e2b, #3a2312); box-shadow: 0 1px 0 rgba(255,230,190,.2), inset 0 -2px 4px rgba(0,0,0,.5);"></div>
+              <div style="position: absolute; left: 46px; top: 6px; width: 4px; height: 44px; border-radius: 2px; background: #f1e6cc; box-shadow: 0 0 0 1px #2e1b0d;"></div>
+              <div style="position: absolute; left: 42px; top: 42px; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #e0cfa4, #8c7a55);"></div>
+            </div>
+          </div>
+          <label for="corr" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;">Correction strength</label>
+          <input id="corr" type="range" min="0" max="1" step="0.5" value="0.5" style="width: 100%; margin: 0; accent-color: #6b4423;">
+          <div style="display: flex; justify-content: space-between; font-family: 'Courier Prime', monospace; font-size: 10.5px; color: #3a2a14;"><span>0 jumpy</span><span style="font-weight: 700; color: #9e2018;">0.5 set</span><span>1.0 chill</span></div>
+          <span style="font-family: 'Courier Prime', monospace; font-style: italic; font-size: 10.5px; color: #3a2a14;">Higher = fewer false alarms, more missed attacks</span>
+        </div>
+      </form>
+    </aside>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

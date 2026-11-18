@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AeroGuard Strip Board</title>
+<link rel="preload" href="fonts/bebas-neue-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/courier-prime-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app" id="app">
+
+  <header class="top">
+    <div class="brand">
+      <h1>AeroGuard <span id="viewTitle">Live Detection</span></h1>
+      <div class="brand-sub">
+        <span class="brand-kicker" id="viewKicker">Strip board | all towers</span>
+        <span class="brand-tag">Six towers. One model. Zero chill.</span>
+      </div>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button type="button" class="tab" role="tab" id="tab-live" aria-selected="true" aria-controls="view-live">Live Detection</button>
+      <button type="button" class="tab" role="tab" id="tab-train" aria-selected="false" aria-controls="view-train" tabindex="-1">Training Run</button>
+    </div>
+
+    <div class="top-right">
+      <div class="infobox" id="infobox">Global model: loading | Replay: 2019-02-04 | Strength 0.50</div>
+      <div class="clock wood" id="clock" aria-label="Replay clock, UTC">--:--:--<span>Z</span></div>
+    </div>
+  </header>
+
+  <main class="views">
+
+    <!-- ============ LIVE DETECTION ============ -->
+    <section class="view view-live" id="view-live" role="tabpanel" aria-labelledby="tab-live">
+      <div class="live-left">
+
+        <div class="console wood">
+          <div class="conn" id="conn" data-state="connecting">
+            <span class="conn-lamp" aria-hidden="true"></span>
+            <span id="connText">Link: connecting</span>
+          </div>
+          <p class="ticker" id="ticker"><span id="tickerText">Negative contact. Suspiciously quiet.</span></p>
+          <div class="ctrls">
+            <button type="button" class="switch" id="runBtn" aria-pressed="true">
+              <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+              <span class="switch-label" id="runLabel">Streaming</span>
+            </button>
+            <fieldset class="speed">
+              <legend>Msgs/s</legend>
+              <label><input type="radio" name="rate" value="1"><span>1</span></label>
+              <label><input type="radio" name="rate" value="2"><span>2</span></label>
+              <label><input type="radio" name="rate" value="4" checked><span>4</span></label>
+              <label><input type="radio" name="rate" value="8"><span>8</span></label>
+            </fieldset>
+            <button type="button" class="deskbtn" id="resetBtn">Reset counters</button>
+          </div>
+        </div>
+
+        <section class="racks" id="racks" aria-label="Client racks"></section>
+
+        <div class="lower">
+          <section class="logsheet" aria-labelledby="logTitle">
+            <div class="log-margin" aria-hidden="true"></div>
+            <div class="log-holes" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div class="log-head">
+              <h2 id="logTitle">Incident log <span>| supervisor's book</span></h2>
+              <span class="log-note" id="logNote">Newest on top, per the regs. 0 entries.</span>
+            </div>
+            <div class="log-wrap" id="logWrap">
+              <table class="log">
+                <thead>
+                  <tr><th scope="col">Time</th><th scope="col">Client</th><th scope="col">Attack type</th><th scope="col">Confidence</th><th scope="col">icao24</th><th scope="col">Verdict</th></tr>
+                </thead>
+                <tbody id="logBody"></tbody>
+              </table>
+            </div>
+            <p class="sr-only" id="logLive" aria-live="polite" aria-atomic="true"></p>
+          </section>
+
+          <section class="stampkey" aria-labelledby="keyTitle">
+            <h2 id="keyTitle">Stamp key</h2>
+            <div class="key-grid">
+              <div><span class="stamp stamp-static" style="--r:-8deg">GHOST</span><span>ghost_aircraft</span></div>
+              <div><span class="stamp stamp-static" style="--r:-11deg">SPOOFED</span><span>gps_spoof</span></div>
+              <div><span class="stamp stamp-static" style="--r:-6deg">VELOCITY?</span><span>velocity_spoof</span></div>
+              <div><span class="stamp stamp-static" style="--r:-9deg">REPLAYED</span><span>replay</span></div>
+              <div><span class="stamp stamp-static" style="--r:-7deg">FLOODED</span><span>flooding</span></div>
+              <div><span class="stamp stamp-static stamp-oops" style="--r:-8deg">OOPS<span class="sub">(FALSE ALARM)</span></span><span>truth: benign</span></div>
+            </div>
+            <div class="key-row"><span class="key-pencil" aria-hidden="true"></span>grease pencil = model flagged it</div>
+            <div class="key-row k-missed"><span class="missed-mark missed-static">MISSED</span>attack the model let through</div>
+            <div class="key-foot" id="keyFoot">6 clients | Federated with Flower | FedAvg</div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="desk" aria-label="Inject attack">
+        <div class="clip" aria-hidden="true"><div></div></div>
+        <form class="desk-form" id="injectForm">
+          <div class="desk-head">
+            <span>FORM INJ-25 | MISCHIEF DESK</span>
+            <h2>Inject attack</h2>
+          </div>
+
+          <div class="field">
+            <label for="target" class="flabel">Target client</label>
+            <select id="target" name="target"></select>
+          </div>
+
+          <fieldset class="atk">
+            <legend class="flabel">Attack type</legend>
+            <label class="rad"><input type="radio" name="atk" value="gps_spoof">gps_spoof<span class="lead"></span><span class="rad-stamp">SPOOFED</span></label>
+            <label class="rad"><input type="radio" name="atk" value="velocity_spoof">velocity_spoof<span class="lead"></span><span class="rad-stamp">VELOCITY?</span></label>
+            <label class="rad"><input type="radio" name="atk" value="replay">replay<span class="lead"></span><span class="rad-stamp">REPLAYED</span></label>
+            <label class="rad"><input type="radio" name="atk" value="ghost_aircraft" checked>ghost_aircraft<span class="lead"></span><span class="rad-stamp">GHOST</span></label>
+            <label class="rad"><input type="radio" name="atk" value="flooding">flooding<span class="lead"></span><span class="rad-stamp">FLOODED</span></label>
+          </fieldset>
+
+          <div class="burst">
+            <label for="burst" class="flabel">Burst size</label>
+            <div class="stepper">
+              <button type="button" id="burstDec" aria-label="Decrease burst size">-</button>
+              <input id="burst" name="burst" type="number" value="25" min="1" max="200" inputmode="numeric">
+              <button type="button" id="burstInc" aria-label="Increase burst size">+</button>
+            </div>
+          </div>
+
+          <div class="lever-box">
+            <div class="lever-row">
+              <div class="lever" id="lever" aria-hidden="true">
+                <div class="lever-slot"></div>
+                <div class="lever-arm"><div class="lever-rod"></div><div class="lever-ball"></div></div>
+              </div>
+              <button type="submit" class="pull" id="pullBtn">
+                <span class="pull-big">Pull to inject</span>
+                <span class="pull-small" id="pullSummary">ghost_aircraft x25 at C2</span>
+              </button>
+            </div>
+            <span class="lever-note" id="injectNote" role="status" aria-live="polite">Mischief Desk: authorised personnel and chaos goblins only</span>
+          </div>
+
+          <div class="dial-sec">
+            <span class="flabel" id="dialLabel">Correction strength</span>
+            <div class="dial" id="dial" aria-hidden="true">
+              <span class="dial-mark m0" data-v="0">0</span>
+              <span class="dial-mark m5" data-v="0.5">0.5</span>
+              <span class="dial-mark m1" data-v="1">1.0</span>
+              <div class="dial-ticks">
+                <span style="--a:-60deg" class="tk big"></span>
+                <span style="--a:-30deg" class="tk"></span>
+                <span style="--a:0deg" class="tk mid"></span>
+                <span style="--a:30deg" class="tk"></span>
+                <span style="--a:60deg" class="tk big"></span>
+              </div>
+              <div class="knob" id="knob"><div class="knob-cap"></div><div class="knob-needle"></div><div class="knob-hub"></div></div>
+            </div>
+            <label for="corr" class="sr-only">Correction strength, 0 to 1</label>
+            <input id="corr" type="range" min="0" max="1" step="0.05" value="0.5">
+            <div class="dial-legend"><span>0 jumpy</span><span class="dial-val" id="corrVal">0.50 set</span><span>1.0 chill</span></div>
+            <span class="dial-cap">Higher = fewer false alarms, more missed attacks</span>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <!-- ============ TRAINING RUN ============ -->
+    <section class="view view-train" id="view-train" role="tabpanel" aria-labelledby="tab-train" hidden>
+      <div class="train-left">
+        <section class="chartsheet" aria-labelledby="chartTitle">
+          <div class="chart-head">
+            <h2 id="chartTitle">Global accuracy by round <span>| flight log</span></h2>
+            <span class="chart-note" id="chartNote">No run loaded yet.</span>
+          </div>
+          <div class="chart-box" id="chartBox">
+            <svg id="chart" role="img" aria-labelledby="chartTitle chartDesc"><desc id="chartDesc">Global model accuracy after each federated round.</desc></svg>
+          </div>
+        </section>
+        <section class="tcards" id="tcards" aria-label="Client towers during training"></section>
+      </div>
+
+      <aside class="desk desk-train" aria-label="Training controls">
+        <div class="clip" aria-hidden="true"><div></div></div>
+        <div class="desk-form">
+          <div class="desk-head">
+            <span>FORM FL-15 | TRAINING DESK</span>
+            <h2>Federated run</h2>
+          </div>
+
+          <dl class="runstats">
+            <div><dt>Run</dt><dd id="tsRun">none</dd></div>
+            <div><dt>Round</dt><dd id="tsRound">0 / 0</dd></div>
+            <div><dt>Global acc</dt><dd id="tsAcc">-</dd></div>
+            <div><dt>Best round</dt><dd id="tsBest">-</dd></div>
+            <div><dt>Bytes moved</dt><dd id="tsBytes">0 B</dd></div>
+            <div><dt>Per update</dt><dd id="tsPayload">-</dd></div>
+          </dl>
+          <p class="train-status" id="trainStatus" role="status" aria-live="polite">Standing by.</p>
+
+          <div class="train-btns">
+            <div class="field">
+              <label for="runSel" class="flabel">Run on file</label>
+              <select id="runSel"><option value="latest">latest</option></select>
+            </div>
+            <button type="button" class="deskbtn big" id="replayBtn">Replay run</button>
+            <div class="live-train">
+              <div class="burst">
+                <label for="rounds" class="flabel">Rounds</label>
+                <div class="stepper">
+                  <button type="button" id="roundsDec" aria-label="Fewer rounds">-</button>
+                  <input id="rounds" type="number" value="10" min="1" max="100" inputmode="numeric">
+                  <button type="button" id="roundsInc" aria-label="More rounds">+</button>
+                </div>
+              </div>
+              <button type="button" class="pull pull-train" id="trainBtn"><span class="pull-big">Train live</span><span class="pull-small">Flower, 6 clients, FedAvg</span></button>
+            </div>
+          </div>
+
+          <div class="fedavg">
+            <span class="flabel">How FedAvg works</span>
+            <p>Each tower trains on its own traffic. Only the model weights travel; raw messages stay in their region. (Simulated here on one laptop.)</p>
+            <p class="fedavg-2">The server averages the weights, weighted by how many rows each tower has, and sends the new model back out.</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
