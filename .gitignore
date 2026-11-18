@@ -1,10 +1,30 @@
+# --- Manuscript: kept locally by the authors, never committed ---
+paper/
+
 # --- Raw and processed data (GB-scale, never belongs in git) ---
 raw_data/
 data/
+labeled*/
 *.csv
+*.csv.gz
 *.csv.tar
 *.tar
 !requirements*.csv
+
+# --- Experiment outputs written by the scripts' default paths ---
+results/
+runs/
+models/
+audit_out/
+rev_runs*/
+all_results/
+generated/
+*.zip
+
+# --- Live demo: prepared data, saved runs and models (rebuilt by demo/start_demo.sh) ---
+demo/data/
+demo/runs/
+demo/models/
 
 # --- Python ---
 __pycache__/
@@ -13,27 +33,20 @@ __pycache__/
 .venv/
 venv/
 
-# --- Generated outputs (regenerate on every run, don't need history) ---
-training_curves.png
+# --- Generated plots (regenerated on every run) ---
+training_curves*.png
 *_curves.png
-test_curves.png
 *.png
 !docs/**/*.png
 
-# --- Model checkpoints, if any get saved to disk later ---
+# --- Model checkpoints and pickled preprocessors / samples ---
 *.pt
 *.pth
+*.pkl
 
 # --- OS / editor cruft ---
 .DS_Store
 Thumbs.db
 *.swp
+*.Zone.Identifier
 *:Zone.Identifier
-*:Zone.Identifier
-paper/*.aux
-paper/*.log
-paper/*.bbl
-paper/*.blg
-paper/*.out
-paper/*.fls
-paper/*.fdb_latexmk

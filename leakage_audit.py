@@ -458,6 +458,7 @@ def write_tex(path, summary, data_label, region_diag=None, region_stats=None):
     lines += [r"\bottomrule\end{tabularx}",
               r"\par\smallskip\parbox{\textwidth}{\scriptsize " + note + "}",
               r"\end{table*}", ""]
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     open(path, "w").write("\n".join(lines))
 
 
