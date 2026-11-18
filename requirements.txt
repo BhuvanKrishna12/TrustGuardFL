@@ -7,10 +7,11 @@ scipy==1.18.1
 joblib==1.6.0
 lightgbm==4.7.0
 matplotlib==3.11.2
-# PyTorch: tested with 2.14.1 (CUDA 12.6 build). On the laptop install the CUDA wheel
-# that matches the driver, e.g. pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126
+# PyTorch: tested with 2.14.1 (CUDA 12.6 build). Install the CUDA wheel that matches the
+# GPU driver, e.g. pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cu126,
+# or the CPU wheel (--index-url https://download.pytorch.org/whl/cpu) on a machine without one.
 torch==2.14.1
 # Optional
 # pyarrow           # training-sample cache as parquet instead of pickle
-# fastapi==0.143.0, uvicorn==0.53.0, pydantic==2.13.5   # inference_server.py demo only
+# live demo (demo/): see demo/requirements-demo.txt (flwr, ray, fastapi, uvicorn)
 # flwr              # federated_simulation_flower.py only (not used by the paper's runs)

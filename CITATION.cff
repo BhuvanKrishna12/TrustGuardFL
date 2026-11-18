@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper it accompanies (see preferred-citation)."
+type: software
+title: "AeroGuard"
+abstract: "Federated intrusion detection for ADS-B surveillance on OpenSky state vectors with five synthetic attacks, a synthetic-attack leakage audit and a class-prior correction."
+# TODO: replace with the paper's author list before publishing
+authors:
+  - family-names: "TODO"
+    given-names: "Fill in author list"
+repository-code: "https://github.com/BhuvanKrishna12/AeroGuard"
+license: MIT
+keywords:
+  - federated learning
+  - intrusion detection
+  - ADS-B
+  - OpenSky
+  - aviation security
+preferred-citation:
+  type: article
+  title: "AeroGuard: Federated Intrusion Detection for ADS-B Surveillance with a Synthetic-Attack Leakage Audit and Class-Prior Correction"
+  # TODO: replace with the paper's author list before publishing
+  authors:
+    - family-names: "TODO"
+      given-names: "Fill in author list"
