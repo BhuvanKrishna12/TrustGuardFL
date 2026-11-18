@@ -44,10 +44,22 @@ as flooding.
     the original ablation result alone.
 
 Usage:
-    python3 stratified_flooding_check.py --model-path best_model.pt \
+    python3 tools/diagnostics/stratified_flooding_check.py --model-path best_model.pt \
         --holdout-data-path holdout_jan14_6h.csv
 -------------------------------------------------------------------
 """
+
+import os as _os
+import sys as _sys
+
+# Moved out of the repository root: put the root (federated_simulation,
+# lgbm_baseline) and this folder on the import path so the script runs from
+# any working directory.
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+for _p in (_HERE, _os.path.dirname(_os.path.dirname(_HERE))):
+    if _p not in _sys.path:
+        _sys.path.insert(0, _p)
+
 import argparse
 
 import joblib
@@ -60,7 +72,8 @@ import federated_simulation as fs
 KINEMATIC_COLS = ["implied_speed_mps", "speed_consistency_delta",
                    "vrate_consistency_delta", "turn_rate_deg_s"]
 
-# Same bool-like columns inference_server.py's predict() / batch_inference_demo.py's
+# Same bool-like columns as the earlier demo's inference_server.py predict() (since removed) /
+# tools/prior_correction/batch_inference_demo.py's
 # predict_batch() cast to float before scaling -- kept identical here so this
 # script never drifts from the one already-debugged path.
 BOOL_COLS = [
@@ -74,7 +87,7 @@ BOOL_COLS = [
 
 
 def load_model(model_path):
-    """Loads a checkpoint EXACTLY the way inference_server.py's and
+    """Loads a checkpoint EXACTLY the way the earlier inference_server.py's and
     batch_inference_demo.py's load_model() do -- same payload keys, same
     GRU rejection, same paired _preprocess.pkl scaler loading."""
     payload = torch.load(model_path, weights_only=False)

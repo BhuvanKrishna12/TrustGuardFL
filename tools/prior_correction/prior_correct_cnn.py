@@ -15,11 +15,22 @@ Reports three versions on the fixed holdout, in the same format as
 lgbm_baseline.py: as trained, full correction, half (sqrt) correction.
 
 Usage:
-  python3 prior_correct_cnn.py --model-path runs/A1_4days_10M.pt \
+  python3 tools/prior_correction/prior_correct_cnn.py --model-path runs/A1_4days_10M.pt \
       --holdout holdout_sample.csv \
       --prior-json runs/L1_4days_10M.json \
       --out-prefix runs/A1_4days_10M_prior
 """
+
+import os as _os
+import sys as _sys
+
+# Moved out of the repository root: put the root (federated_simulation,
+# lgbm_baseline) and this folder on the import path so the script runs from
+# any working directory.
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+for _p in (_HERE, _os.path.dirname(_os.path.dirname(_HERE))):
+    if _p not in _sys.path:
+        _sys.path.insert(0, _p)
 
 import argparse
 import json

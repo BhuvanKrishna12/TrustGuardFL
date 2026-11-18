@@ -21,10 +21,22 @@ before and after this single substitution.
     too, independent of the -1 artifact.
 
 Usage:
-    python3 ablation_test.py --model-path best_model.pt \
+    python3 tools/diagnostics/ablation_test.py --model-path best_model.pt \
         --holdout-data-path holdout_jan14_6h.csv --n-samples 300
 -------------------------------------------------------------------
 """
+
+import os as _os
+import sys as _sys
+
+# Moved out of the repository root: put the root (federated_simulation,
+# lgbm_baseline) and this folder on the import path so the script runs from
+# any working directory.
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+for _p in (_HERE, _os.path.dirname(_os.path.dirname(_HERE))):
+    if _p not in _sys.path:
+        _sys.path.insert(0, _p)
+
 import argparse
 
 import joblib

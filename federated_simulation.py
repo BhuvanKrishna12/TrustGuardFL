@@ -631,13 +631,13 @@ def build_model(model_type, n_features, n_classes, mlp_hidden_sizes=(64, 32), cn
     Single source of truth for constructing a model given an architecture
     choice -- used by main()'s hand-rolled FedAvg loop, by
     federated_simulation_flower.py's Flower client/server code, AND by
-    inference_server.py's demo backend, so all three paths build
+    demo/server.py (the live demo backend), so all three paths build
     IDENTICAL architectures from the same config.
 
     device=None (default) uses this module's own DEVICE constant
     (cuda if available), matching every existing caller's behavior
     exactly. Pass an explicit device (e.g. torch.device("cpu")) to
-    override -- inference_server.py does this deliberately, since a
+    override -- demo/server.py does this deliberately, since a
     live demo shouldn't depend on whatever GPU happens to be on the
     demo machine.
     """

@@ -23,10 +23,21 @@ Selection rule (pick one):
                                    below this limit
 
 Usage:
-  python3 per_class_correction.py --model-path runs/A2_4days_20M.pt \
+  python3 tools/prior_correction/per_class_correction.py --model-path runs/A2_4days_20M.pt \
       --holdout holdout_sample.csv --prior-json runs/L1_4days_10M.json \
       --classes velocity_spoof,replay --out-prefix runs/A2_perclass
 """
+
+import os as _os
+import sys as _sys
+
+# Moved out of the repository root: put the root (federated_simulation,
+# lgbm_baseline) and this folder on the import path so the script runs from
+# any working directory.
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+for _p in (_HERE, _os.path.dirname(_os.path.dirname(_HERE))):
+    if _p not in _sys.path:
+        _sys.path.insert(0, _p)
 
 import argparse
 import itertools

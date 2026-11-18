@@ -5,6 +5,9 @@ Whole-file batch inference demo. Loads your trained model (same
 checkpoint format as inference_server.py) and runs it over EVERY row
 of a real CSV file, reporting predictions as they naturally come out.
 
+(inference_server.py, mentioned below, was the earlier single-model browser
+demo. It has been removed; the live demo is now in demo/.)
+
 How this differs from inference_server.py:
   inference_server.py is the LIVE, single-row, attack-injection demo --
   a browser dashboard where you click a button, sample one row at a
@@ -31,14 +34,26 @@ inference, and isn't supported here (same restriction, same reason,
 as inference_server.py).
 
 Usage:
-    python3 batch_inference_demo.py --model-path best_model.pt \
+    python3 tools/prior_correction/batch_inference_demo.py --model-path best_model.pt \
         --input-csv holdout_jan14_6h.csv
 
-    python3 batch_inference_demo.py --model-path best_model.pt \
+    python3 tools/prior_correction/batch_inference_demo.py --model-path best_model.pt \
         --input-csv unlabeled_day.csv --output-csv predictions.csv \
         --batch-size 8192
 -------------------------------------------------------------------
 """
+
+import os as _os
+import sys as _sys
+
+# Moved out of the repository root: put the root (federated_simulation,
+# lgbm_baseline) and this folder on the import path so the script runs from
+# any working directory.
+_HERE = _os.path.dirname(_os.path.abspath(__file__))
+for _p in (_HERE, _os.path.dirname(_os.path.dirname(_HERE))):
+    if _p not in _sys.path:
+        _sys.path.insert(0, _p)
+
 import argparse
 import os
 import sys
