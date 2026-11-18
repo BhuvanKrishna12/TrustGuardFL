@@ -25,8 +25,8 @@ drive / an archive is not readable (nothing is marked done; reconnect and
 rerun); 1 other error.
 
 Usage:
-  python3 experiments/reprocess_mv.py --tars-list /mnt/d/fl-ids-sweep/tars.txt \
-      --days 2019-01-07 2019-04-01 --out-dir ~/rev2_work/labeled_mv --tmp-dir ~/rev2_work/raw_tmp
+  python3 experiments/reprocess_mv.py --tars-list $RAW_DIR/tars.txt \
+      --days 2019-01-07 2019-04-01 --out-dir $WORK_DIR/labeled_mv --tmp-dir $WORK_DIR/raw_tmp
 """
 
 import argparse

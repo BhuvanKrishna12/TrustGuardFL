@@ -11,11 +11,11 @@ packing the machines into near-equal total time (greedy longest-first).
       --machines me,user1,user2 \
       --done experiments/shards/DONE.txt \
       [--weights fed_cnn=3480,fed_mlp=3480,central_cnn=180,central_mlp=180,lgbm=90] \
-      [--out-dir experiments/shards] [--split-md SPLIT.md]
+      [--out-dir experiments/shards] [--split-md split_summary.md]
 
 Rules baked in (overridable with --no-rules):
   * the fast step-6 correction ablation (LightGBM + central CNN) stays on 'me'
-    (the user's machine, the slowest GPU; these runs are quick);
+    (shard id of the main machine, the one with the labelled files; these runs are quick);
   * the heaviest federated chunk, the step-10 federated ablation, prefers the
     helper machines;
   * a run series (same folder+model+feature-set, different seeds) is kept on one
@@ -34,7 +34,7 @@ import rev2_plan as P  # noqa: E402
 DEFAULT_WEIGHTS = {"fed_cnn": 3480, "fed_mlp": 3480, "fedprox": 3480,
                    "central_cnn": 180, "central_mlp": 180, "lgbm": 90}
 
-# The runs the user's machine has already finished (steps 1-4 and part of step 5):
+# The runs the main machine had already finished (steps 1-4 and part of step 5):
 # central CNN + LightGBM (core & full) all seeds, and federated CNN full seeds 1-3.
 DEFAULT_DONE = (
     [f"s5:central_cnn:corrected:{fs}:seed{s}" for fs in ("core", "full") for s in range(1, 6)] +
@@ -212,7 +212,7 @@ def write_split_md(path, shards, load, machines, weights, roles=None):
              "rebalance, then re-check coverage with the smoke test's sharding check.", ""]
     for n in note:
         lines += [n, ""]
-    lines += ["Base run-time weights (seconds, user's 3050): " +
+    lines += ["Base run-time weights (seconds, main machine's GPU): " +
               ", ".join(f"{k}={int(v)}" for k, v in sorted(weights.items())) + ".", "",
               "| machine | runs | est. hours |", "| --- | ---: | ---: |"]
     for m in machines:
@@ -235,14 +235,15 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--machines", default="me,user1,user2",
-                    help="comma-separated; the FIRST is the user's machine ('me')")
+                    help="comma-separated shard ids; the FIRST is the main machine ('me')")
     ap.add_argument("--done", action="append", default=None,
                     help="file of done run-keys and/or inline comma list; repeatable. "
                          "If omitted, the built-in done set (steps 1-4 and part of step 5) is used.")
     ap.add_argument("--weights", default=None,
                     help="model=seconds,... overrides (e.g. fed_cnn=2600 for a faster helper GPU)")
     ap.add_argument("--out-dir", default=os.path.join(HERE, "shards"))
-    ap.add_argument("--split-md", default=os.path.join(os.path.dirname(HERE), "SPLIT.md"))
+    ap.add_argument("--split-md", default=None,
+                    help="optional Markdown summary of the split (hours and runs per machine)")
     ap.add_argument("--cpu-only", default="user2",
                     help="comma-separated machines with no CUDA GPU: they get ONLY "
                          "non-federated runs. Default 'user2'. Pass '' to disable.")
@@ -251,7 +252,7 @@ def main(argv=None):
                          "(default 'user2', the integrated-GPU machine). Pass '' to spread them.")
     ap.add_argument("--speed", default="user1=1.3",
                     help="machine=factor,... GPU speed for splitting federated runs; a faster "
-                         "GPU (higher factor) takes proportionally more (default user1=1.3 for a 4060)")
+                         "GPU (higher factor) takes proportionally more (default user1=1.3 for a faster GPU)")
     ap.add_argument("--cpu-central-weight", type=float, default=600.0,
                     help="seconds for a central CNN/MLP run on a CPU-only machine (~10 min)")
     ap.add_argument("--no-rules", action="store_true",
@@ -280,7 +281,8 @@ def main(argv=None):
     picked, load = assign(units, machines, roles)
     shards = {m: group_series(picked[m]) for m in machines}
     write_shards(shards, a.out_dir, machines)
-    write_split_md(a.split_md, shards, load, machines, weights, roles)
+    if a.split_md:
+        write_split_md(a.split_md, shards, load, machines, weights, roles)
 
     # coverage self-check: shards partition the remaining run-keys exactly
     assigned = set()
@@ -292,7 +294,7 @@ def main(argv=None):
     assert assigned == allrk, ("coverage mismatch: "
                                f"missing {sorted(allrk - assigned)[:3]}, extra {sorted(assigned - allrk)[:3]}")
     h = hours(load)
-    print(f"wrote {len(machines)} shard files to {a.out_dir} and {a.split_md}")
+    print(f"wrote {len(machines)} shard files to {a.out_dir}" + (f" and {a.split_md}" if a.split_md else ""))
     print(f"remaining run-keys: {len(allrk)} (done: {len(done)})")
     for m in machines:
         print(f"  {m}: {sum(len(s['units']) for s in shards[m])} runs, ~{h[m]:.1f} h")

@@ -6,22 +6,31 @@
 #   bash run_revision2.sh stop      stop cleanly (finishes the current small unit first)
 #   bash run_revision2.sh dry-run   print every command without running anything
 #
-# All new data lives on the WSL disk in ~/rev2_work. Only step 2 reads the external
-# drive D:. Closing the lid / sleep just pauses the run; it continues on wake-up.
-# Read RUN_REVISION2.md for the short guide.
+# All outputs live in the work dir REV2_W (default ~/rev2_work). Only step 2 reads the
+# raw OpenSky archives, which may sit on a separate (for example external) drive.
+# Sleep or a closed terminal just pauses the run; `start` continues it.
+# See docs/REPRODUCING.md for the guide.
 #
-# Paths can be overridden with environment variables (used by the self-test):
-#   REV2_W work dir | REV2_ZIP code zip | REV2_CODE use this code folder instead of the zip
-#   REV2_P project folder on D: | REV2_TARS list of raw archives | REV2_VENV python venv
+# Paths can be overridden with environment variables (also used by the self-test):
+#   REV2_W work dir (default ~/rev2_work)
+#   REV2_CODE code folder (default: the folder holding this script)
+#   REV2_ZIP optional code zip from experiments/make_release_zip.sh; step 1 unpacks it to $REV2_W/rev2
+#   REV2_TARS text file listing the raw .tar archives, one path per line (default $REV2_P/tars.txt
+#             when REV2_P is set; otherwise put the list at $REV2_W/tars.txt)
+#   REV2_P optional folder holding the raw archives; the results zip is also copied there
+#   REV2_VENV optional python venv to activate (default: use the current python3)
 #   REV2_SIM=1 tiny settings for synthetic data | REV2_SKIP_SMOKE=1 | REV2_NEED_GB | REV2_STOP_TIMEOUT
 set -u
 
 W="${REV2_W:-$HOME/rev2_work}"
-ZIP_IN="${REV2_ZIP:-/mnt/c/Users/Dell/Downloads/fl-ids-revision2.zip}"
-P="${REV2_P:-/mnt/d/fl-ids-sweep}"
-TARS_SRC="${REV2_TARS:-$P/tars.txt}"
-VENV="${REV2_VENV:-$HOME/flids-venv}"
-CODE="${REV2_CODE:-$W/rev2}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ZIP_IN="${REV2_ZIP:-}"
+P="${REV2_P:-}"
+TARS_SRC="${REV2_TARS:-${P:+$P/tars.txt}}"
+VENV="${REV2_VENV:-}"
+if [ -n "${REV2_CODE:-}" ]; then CODE="$REV2_CODE"
+elif [ -n "$ZIP_IN" ]; then CODE="$W/rev2"
+else CODE="$SCRIPT_DIR"; fi
 SIM="${REV2_SIM:-0}"
 STOP_TIMEOUT="${REV2_STOP_TIMEOUT:-600}"
 TEST_DAYS="${REV2_TEST_DAYS:-2019-12-09 2019-12-16 2019-12-23 2019-12-30}"
@@ -70,12 +79,14 @@ running_pid() {
 }
 free_gb()  { df -Pk "$1" 2>/dev/null | awk 'NR==2 {printf "%d", $4/1048576}'; }
 drive_help() {
-  say "  HOW TO RECOVER: reconnect the external drive. If 'ls /mnt/d' says 'No such device',"
-  say "  open PowerShell, run:  wsl --shutdown   then reopen WSL and run:  bash ~/run_revision2.sh start"
+  say "  HOW TO RECOVER: make the raw archives listed in ${TARS_SRC:-$W/tars.txt} readable again (for"
+  say "  example, reconnect the drive that holds them; under WSL, if the mount reports 'No such device',"
+  say "  run  wsl --shutdown  in PowerShell and reopen WSL), then run:  bash $SELF start"
   say "  Nothing is lost; finished hours and days are kept."
 }
 plan()     { python3 "$CODE/experiments/rev2_plan.py" "$@"; }
 activate() {
+  [ -n "$VENV" ] || return 0              # no venv given: use the current python3
   if [ -f "$VENV/bin/activate" ]; then # shellcheck disable=SC1091
     source "$VENV/bin/activate"
   elif [ "$SIM" != "1" ]; then say "ERROR: python environment $VENV not found"; return 1; fi
@@ -84,7 +95,7 @@ activate() {
 # ------------------------------------------------------------------ steps
 step_1() {  # setup + self-test
   say "STEP 1/11 setup and self-test (about 20 minutes)"
-  if [ -z "${REV2_CODE:-}" ]; then
+  if [ -z "${REV2_CODE:-}" ] && [ -n "$ZIP_IN" ]; then
     if [ -f "$ZIP_IN" ]; then
       rm -rf "$W/rev2.new" && mkdir -p "$W/rev2.new" && unzip -oq "$ZIP_IN" -d "$W/rev2.new" \
         && [ -f "$W/rev2.new/rev2/experiments/run_experiments.py" ] \
@@ -92,7 +103,7 @@ step_1() {  # setup + self-test
       rm -rf "$W/rev2.old"; [ -d "$W/rev2" ] && mv "$W/rev2" "$W/rev2.old"
       mv "$W/rev2.new/rev2" "$W/rev2" && rm -rf "$W/rev2.new" "$W/rev2.old"
     elif [ ! -f "$CODE/experiments/run_experiments.py" ]; then
-      say "ERROR: $ZIP_IN not found. Put fl-ids-revision2.zip into the Windows Downloads folder."; return 1
+      say "ERROR: code zip $ZIP_IN not found (REV2_ZIP)."; return 1
     fi
   fi
   [ -f "$CODE/experiments/run_experiments.py" ] || { say "ERROR: code folder $CODE is incomplete"; return 1; }
@@ -116,19 +127,19 @@ step_1() {  # setup + self-test
   fi
 }
 
-step_2() {  # multi-variant reprocess of the 8 Mondays (the only step that reads D:)
-  say "STEP 2/11 reprocess the 8 Mondays from the raw archives on D: (about 6 hours; stop/start any time)"
+step_2() {  # multi-variant reprocess of the 8 Mondays (the only step that reads the raw archives)
+  say "STEP 2/11 reprocess the 8 Mondays from the raw archives (about 6 hours; stop/start any time)"
   if [ -r "$TARS_SRC" ]; then cp "$TARS_SRC" "$W/tars.txt.tmp" && mv "$W/tars.txt.tmp" "$W/tars.txt"
   elif [ ! -f "$W/tars.txt" ]; then
-    say "STOPPED: the external drive is not connected ($TARS_SRC not readable)."; drive_help; return 3
+    say "STOPPED: the raw archives are not reachable (archive list ${TARS_SRC:-$W/tars.txt} not readable)."; drive_help; return 3
   fi
   local have; have=$(du -sk "$W/labeled_mv" 2>/dev/null | awk '{printf "%d", $1/1048576}'); have=${have:-0}
   local free; free=$(free_gb "$W"); free=${free:-0}
   if [ $((free + have)) -lt "$NEED_GB" ]; then
-    say "ERROR: not enough free space on the WSL disk: $free GB free (+$have GB already written), need $NEED_GB GB."
-    say "  Free some space (or ask for help) and run: bash ~/run_revision2.sh start"; return 1
+    say "ERROR: not enough free space in $W: $free GB free (+$have GB already written), need $NEED_GB GB."
+    say "  Free some space and run: bash $SELF start"; return 1
   fi
-  say "  disk check ok: $free GB free on the WSL disk, about $((NEED_GB - have)) GB still needed"
+  say "  disk check ok: $free GB free in $W, about $((NEED_GB - have)) GB still needed"
   mkdir -p "$W/labeled_mv" "$W/raw_tmp"
   local d rc
   for d in $TEST_DAYS $TRAIN_DAYS; do
@@ -140,7 +151,7 @@ step_2() {  # multi-variant reprocess of the 8 Mondays (the only step that reads
         >> "$LOGS/2_reprocess.log" 2>&1
     rc=$?
     if [ $rc -eq 3 ]; then
-      say "STOPPED in step 2 (day $d): the external drive D: is not readable any more."; drive_help; return 3
+      say "STOPPED in step 2 (day $d): the raw archives are not readable any more."; drive_help; return 3
     elif [ $rc -eq 75 ]; then return 75
     elif [ $rc -ne 0 ]; then say "ERROR: day $d failed (see $LOGS/2_reprocess.log)"; return 1; fi
     say "  day $d done"
@@ -154,7 +165,7 @@ assert os.path.getsize(p) == d["bytes"] and d["rows"] > 0
 PY
   done
   rm -rf "$W/raw_tmp"
-  say "  STEP 2 finished. The external drive D: is NOT needed any more and can be unplugged."
+  say "  STEP 2 finished. The raw archives are NOT needed any more (a drive holding them can be unplugged)."
 }
 
 step_3() {  # test sample
@@ -206,13 +217,11 @@ step_11() { # tables + zip
     python3 -c "import zipfile,sys; z=zipfile.ZipFile('results_revision2.zip.tmp'); assert z.testzip() is None and len(z.namelist())>10" && \
     mv results_revision2.zip.tmp results_revision2.zip ) || { say "ERROR: could not write the zip"; return 1; }
   local size; size=$(du -h "$W/results_revision2.zip" | cut -f1)
-  if [ -d "$P" ] && cp "$W/results_revision2.zip" "$P/results_revision2.zip.tmp" 2>/dev/null \
+  if [ -n "$P" ] && [ -d "$P" ] && cp "$W/results_revision2.zip" "$P/results_revision2.zip.tmp" 2>/dev/null \
        && mv "$P/results_revision2.zip.tmp" "$P/results_revision2.zip"; then
-    say "ALL DONE. Send back: $P/results_revision2.zip ($size)  (in Windows: D:\\fl-ids-sweep\\results_revision2.zip)"
+    say "ALL DONE. Results: $P/results_revision2.zip ($size); tables in $W/generated"
   else
-    say "ALL DONE. Send back: $W/results_revision2.zip ($size)"
-    say "  D: is not connected, so the zip stayed on the WSL disk. In Windows Explorer open:"
-    say "  \\\\wsl\$\\Ubuntu\\home\\$(basename "$HOME")\\$(basename "$W")"
+    say "ALL DONE. Results: $W/results_revision2.zip ($size); tables in $W/generated"
   fi
 }
 
@@ -234,7 +243,7 @@ helper_prepare() {  # cache-only machines: verify the cache, then treat steps 1-
       if ! python3 "$CODE/experiments/verify_cache.py" --work "$W" > "$LOGS/4_verify.log" 2>&1; then
         say "ERROR: the cache is incomplete for cache-only runs. See $LOGS/4_verify.log."
         tail -n 8 "$LOGS/4_verify.log" | sed 's/^/  /' | tee -a "$STATUS"
-        say "  The user should rebuild the share (make_share.sh) on the machine with the files."
+        say "  Rebuild the share (make_share.sh) on the machine that has the labelled files."
         return 1
       fi
       say "  cache OK: this machine can run steps 5-10 without the 120 GB labelled files" ;;
@@ -266,12 +275,12 @@ worker() {
   mkdir -p "$W" "$DONE" "$LOGS"
   echo $$ > "$LOCK.tmp" && mv "$LOCK.tmp" "$LOCK"
   trap 'rm -f "$LOCK"' EXIT
-  trap 'say "interrupted (signal). Run: bash ~/run_revision2.sh start  to continue."; exit 130' INT TERM
+  trap 'say "interrupted (signal). Run: bash $SELF start  to continue."; exit 130' INT TERM
   say "---- run_revision2 started (pid $$) ----"
   activate || exit 1
   local id rc
   for id in $STEP_IDS; do
-    if stop_asked; then say "STOPPED on request before step ${id%%_*}. To continue: bash ~/run_revision2.sh start"; exit 0; fi
+    if stop_asked; then say "STOPPED on request before step ${id%%_*}. To continue: bash $SELF start"; exit 0; fi
     is_done "$id" && continue
     if [ "$id" != "1_setup" ] && [ ! -f "$CODE/experiments/rev2_plan.py" ]; then
       say "ERROR: code folder $CODE missing"; exit 1; fi
@@ -279,11 +288,11 @@ worker() {
     if [ $rc -eq 0 ]; then
       mark_done "$id"; say "step ${id%%_*} finished"
     elif [ $rc -eq 75 ]; then
-      say "STOPPED on request during step ${id%%_*}; everything finished so far is saved. To continue: bash ~/run_revision2.sh start"; exit 0
+      say "STOPPED on request during step ${id%%_*}; everything finished so far is saved. To continue: bash $SELF start"; exit 0
     elif [ $rc -eq 3 ]; then
       exit 3
     else
-      say "ERROR in step ${id%%_*} (code $rc). Nothing was marked done. Look at $LOGS, then run: bash ~/run_revision2.sh start"; exit 1
+      say "ERROR in step ${id%%_*} (code $rc). Nothing was marked done. Look at $LOGS, then run: bash $SELF start"; exit 1
     fi
   done
   say "---- everything is finished ----"
@@ -327,7 +336,7 @@ cmd_stop() {
       kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null
       sleep 5
       kill -KILL -- "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null
-      say "STOPPED (forced after $STOP_TIMEOUT s). To continue: bash ~/run_revision2.sh start"
+      say "STOPPED (forced after $STOP_TIMEOUT s). To continue: bash $SELF start"
       break
     fi
   done
@@ -362,12 +371,13 @@ PY
   fi
   echo "Last lines of $STATUS:"
   tail -n 5 "$STATUS" 2>/dev/null | sed 's/^/  /'
-  echo "Free disk: WSL disk $(free_gb "$W" 2>/dev/null || echo '?') GB; D: $( [ -d "$P" ] && echo "$(free_gb "$P") GB" || echo 'not connected')"
+  echo "Free disk: work dir $(free_gb "$W" 2>/dev/null || echo '?') GB; raw archive folder: $( [ -n "$P" ] && [ -d "$P" ] && echo "$(free_gb "$P") GB" || echo 'not set or not connected')"
 }
 
 cmd_dry() {
-  echo "# work dir $W, code $CODE, raw archive list $TARS_SRC"
-  echo "# step 1: unzip $ZIP_IN -> $W/rev2 ; bash $CODE/experiments/smoke_test.sh $W/smoke"
+  echo "# work dir $W, code $CODE, raw archive list ${TARS_SRC:-$W/tars.txt}"
+  if [ -n "$ZIP_IN" ] && [ -z "${REV2_CODE:-}" ]; then echo "# step 1: unzip $ZIP_IN -> $W/rev2 ; bash $CODE/experiments/smoke_test.sh $W/smoke"
+  else echo "# step 1: bash $CODE/experiments/smoke_test.sh $W/smoke"; fi
   local d
   for d in $TEST_DAYS $TRAIN_DAYS; do
     echo "python3 -u $CODE/experiments/reprocess_mv.py --tars-list $W/tars.txt --days $d --out-dir $W/labeled_mv --tmp-dir $W/raw_tmp --stop-flag $STOPF --min-hours $MIN_HOURS    # step 2"
@@ -381,7 +391,7 @@ cmd_dry() {
     echo "# steps 4-10: listed after step 1 has unpacked the code (or set REV2_CODE=/path/to/rev2)"
   fi
   echo "python3 $CODE/experiments/aggregate_results.py --runs-dirs $W/runs/main --rev2-root $W/runs --tex-dir $W/generated    # step 11"
-  echo "# step 11: zip -> $W/results_revision2.zip, copied to $P if D: is connected"
+  echo "# step 11: zip -> $W/results_revision2.zip${P:+, copied to $P if that folder exists}"
 }
 
 case "${1:-help}" in

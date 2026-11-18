@@ -22,8 +22,8 @@ training or selection; the natural class mix is preserved.
 
 Usage:
   python3 experiments/make_holdout_sample.py --method hash \
-      ~/rev2_work/labeled_mv/opensky_2019-12-{09,16,23,30}_labeled.csv \
-      --out ~/rev2_work/holdout_sample_mv.csv
+      $WORK_DIR/labeled_mv/opensky_2019-12-{09,16,23,30}_labeled.csv \
+      --out $WORK_DIR/holdout_sample_mv.csv
 """
 
 import argparse

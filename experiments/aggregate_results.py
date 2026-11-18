@@ -21,9 +21,9 @@ any compute. --v2-runs-dir adds the comparison with runs on the old (v2)
 labelled files.
 
 Usage:
-  python3 experiments/aggregate_results.py --runs-dirs /mnt/d/fl-ids-sweep/rev_runs \
-      --v2-runs-dir /mnt/d/fl-ids-sweep/rev_runs_v2 \
-      --audit-table /mnt/d/fl-ids-sweep/audit_v3/feature_audit_table.tex
+  python3 experiments/aggregate_results.py --runs-dirs $WORK_DIR/rev_runs \
+      --v2-runs-dir $WORK_DIR/rev_runs_v2 \
+      --audit-table $WORK_DIR/audit_v3/feature_audit_table.tex
   python3 experiments/aggregate_results.py --placeholder
 """
 

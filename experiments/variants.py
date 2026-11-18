@@ -18,7 +18,7 @@ Corrections
       features are missing when dt < 1 s)
   C5  flooding originals labelled benign          (legacy: labelled flooding)
 
-What the code shows (opensky_fl_ids_pipeline.py, PIPELINE_V3_CHANGES.md):
+What the code shows (opensky_fl_ids_pipeline.py, docs/PIPELINE_V3_CHANGES.md):
 pipeline v2 and v3 differ in C1, C2, C3 and C5 only. The 0.1 s floor (C4) is
 ALREADY part of v2 ("kept in both versions"). So
 

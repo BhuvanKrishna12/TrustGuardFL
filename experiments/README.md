@@ -1,18 +1,25 @@
 # Revision experiments
 
-Code for the journal revision: FedAvg CNN vs centralized CNN vs LightGBM, on the full
+Code for the paper's experiments: FedAvg CNN vs centralized CNN vs LightGBM, on the full
 and core feature sets, over several seeds, with class-prior correction evaluated on
-held-out December days. The step-by-step laptop guide is `../RUN_ALL.md`.
+held-out December days. The end-to-end guide is `../docs/REPRODUCING.md`.
 
 | File | Purpose |
 |---|---|
 | `run_experiments.py` | Trains and evaluates every (model, feature set, seed) run; one JSON per run |
 | `sampling.py` | Training-file stats pass and the uniform per-(region, class) training sampler |
-| `aggregate_results.py` | Turns run JSONs into `paper/generated/*.tex` (macros, tables, figures) |
-| `make_holdout_sample.py` | 1% test sample of the December files (seed 42, per 2M-row chunk) |
+| `variants.py` | Correction variants (v2, v3 and one-correction-at-a-time mixes) rebuilt from multi-variant files |
+| `rev2_plan.py` | The full run grid (steps 4 to 10 of `../run_revision2.sh`): print, run, verify, status |
+| `reprocess_mv.py` | Resumable multi-variant reprocessing of whole days from the raw archives |
+| `make_holdout_sample.py` | 1% test sample of the December files (`--method hash`: same rows from every variant) |
+| `aggregate_results.py`, `aggregate_revision2.py` | Turn run JSONs into LaTeX macros, tables and figure data (`--tex-dir`, default `paper/generated/`) |
+| `make_shards.py`, `shards/`, `merge_runs.py`, `make_input_manifest.py`, `verify_cache.py` | Optional multi-machine mode, see `../docs/MULTI_MACHINE.md` |
+| `make_release_zip.sh` | Packs the code into a zip (used by `test_run_revision2.sh` and to copy the code to another machine) |
 | `check_equivalence.py` | Shows the FedAvg driver reproduces `federated_simulation.py` round by round |
-| `test_sampler.py` | Shows the uniform sampler is unbiased across files and the legacy one is not |
-| `make_synthetic_data.py`, `smoke_test.sh` | Synthetic data and a 5-minute end-to-end test |
+| `make_synthetic_data.py`, `make_synthetic_raw.py` | Synthetic labelled files and synthetic raw OpenSky hours for the tests |
+| `smoke_test.sh` | End-to-end self-test on synthetic data (runs every test below) |
+| `test_*.py`, `test_*.sh` | Sampler, variants, protocol v1 regression, FedProx and resume, cache-only mode, shards, full `run_revision2.sh` simulation, multi-machine simulation |
+| `reference_r1/` | Frozen round-1 harness used only by `test_protocol_v1_regression.py` |
 
 `federated_simulation.py` is not modified. The harness imports its `prep_features`,
 `build_model`, `local_train`, `federated_average`, `model_size_bytes` and (with
@@ -70,13 +77,13 @@ held-out December days. The step-by-step laptop guide is `../RUN_ALL.md`.
 The test days are never used to choose anything. Versions of Python and the main
 packages are stored in every run JSON.
 
-## Commands (real run on the laptop)
+## Commands
 
-See `../RUN_ALL.md` for the full sequence. The core commands:
+The full sequence, including the revision-2 grid, is in `../docs/REPRODUCING.md`. The core
+commands of the main grid, with `$WORK_DIR` the folder holding the labelled day files:
 
 ```bash
-cd /mnt/d/fl-ids-sweep/rev && source ~/flids-venv/bin/activate
-D=/mnt/d/fl-ids-sweep
+D=$WORK_DIR
 
 # test sample from the v3 December files (once)
 python3 experiments/make_holdout_sample.py $D/labeled_v3/opensky_2019-12-{09,16,23,30}_labeled.csv \
@@ -104,9 +111,9 @@ nohup bash -c "python3 experiments/run_experiments.py $V2 --models lgbm && \
                python3 experiments/run_experiments.py $V2 --models fed_cnn --seeds 1,2,3" \
   > $D/rev_runs_v2/nohup.out 2>&1 &
 
-# paper inputs
+# tables and macros
 python3 experiments/aggregate_results.py --runs-dirs $D/rev_runs --v2-runs-dir $D/rev_runs_v2 \
-    --audit-table $D/audit_v3/feature_audit_table.tex
+    --audit-table $D/audit_v3/feature_audit_table.tex --tex-dir $D/generated
 ```
 
 Defaults: seeds 1,2,3,4,5; models fed_cnn,central_cnn,lgbm; feature sets full,core;
@@ -117,7 +124,7 @@ at most 20 epochs.
 exists; `--force` retrains.
 
 **Before any results exist.** `aggregate_results.py --placeholder` writes every file
-with `--` so the paper compiles. An existing `tab_audit.tex` is never overwritten unless
+with `--` so a manuscript that inputs them compiles. An existing `tab_audit.tex` is never overwritten unless
 `--audit-table` is given, in which case that table is copied with its own caption and
 label.
 
@@ -132,7 +139,7 @@ python3 experiments/run_experiments.py --out-dir $D/rev_runs --holdout-only \
 Add `--repredict --holdout <csv>` to re-score a changed test file with the saved models.
 Macro keys exist only for multiples of 0.1 and for rho 0.1% and 1%.
 
-## Time estimate (RTX 3050 6 GB, 11 GB RAM, 10M-row sample)
+## Time estimate (measured on a laptop GPU: RTX 3050 6 GB, 11 GB RAM, 10M-row sample)
 
 | Step | Time |
 |---|---|
@@ -188,7 +195,7 @@ A (`cp -n`); file names never collide. Use the single merged folder for `--holdo
     confusion matrix
   - `prevalence["<rho>"]["mismatched"|"oracle"]`, with the same metrics after reweighting
 
-`aggregate_results.py` writes to `paper/generated/`:
+`aggregate_results.py` writes to `--tex-dir` (default `paper/generated/`, created if missing):
 
 - `results_macros.tex`
 - tables: `tab_headline`, `tab_fed_vs_central`, `tab_ablation`, `tab_perclass`,

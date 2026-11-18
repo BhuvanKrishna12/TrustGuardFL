@@ -4,7 +4,7 @@ merge_runs.py
 -------------------------------------------------------------------
 Merge the per-run results produced by several machines into one runs tree that
 aggregate_results.py can turn into the final tables. Each input is a machine's
-`runs/` folder (as in ~/rev2_work/runs): subfolders main/, var_*/, ls_*/,
+`runs/` folder (as in $WORK_DIR/runs): subfolders main/, var_*/, ls_*/,
 fedprox_*/ each with a runs/ folder of <model>__<fset>__seed<n>.json files.
 
   python3 experiments/merge_runs.py --inputs runsA runsB runsC --out merged_runs

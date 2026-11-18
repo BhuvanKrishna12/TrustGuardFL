@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Simulated full pass of run_revision2.sh on synthetic data (CPU, about 10 minutes):
 # raw synthetic archives for the 8 days -> unzip the code -> every step with tiny settings,
-# with, on the way: the external drive missing at the start, the drive vanishing in the
+# with, on the way: the raw archive drive missing at the start, the drive vanishing in the
 # middle of step 2, a second `start` while running, a graceful `stop` and a kill -9 during
 # training, each followed by `start`. Ends with the tables and results_revision2.zip.
 # Usage: bash experiments/test_run_revision2.sh WORK_DIR
@@ -50,7 +50,7 @@ echo "== 1. external drive missing at the start"
 mv "$T/D" "$T/D_unplugged"
 bash "$RUN" start > /dev/null
 wait_idle
-grep -q "external drive is not connected" "$S" && grep -q "wsl --shutdown" "$S"
+grep -q "raw archives are not reachable" "$S" && grep -q "HOW TO RECOVER" "$S"
 [ -f "$REV2_W/done/1_setup" ] && [ ! -f "$REV2_W/done/2_reprocess" ]
 [ -f "$REV2_W/rev2/experiments/run_experiments.py" ]     # step 1 unpacked the zip
 bash "$RUN" dry-run > "$T/dry.txt"
@@ -63,7 +63,7 @@ bash "$RUN" start > /dev/null
 sleep 1
 [[ "$(bash "$RUN" start)" == *"Already running"* ]]           # no second copy
 wait_idle
-grep -q "external drive D: is not readable" "$S"
+grep -q "raw archives are not readable any more" "$S"
 [ ! -f "$REV2_W/done/2_reprocess" ]
 [ "$(ls "$REV2_W"/labeled_mv/*.done.json | wc -l)" -eq 7 ]
 mv "$T/hidden_day" "$T/D/opensky-states/.2019-09-30"

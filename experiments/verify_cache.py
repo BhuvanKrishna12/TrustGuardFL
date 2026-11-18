@@ -8,7 +8,7 @@ manifest, the per-file stats caches, the uniform union training sample, the two
 legacy-sampler samples and the holdout CSV. Prints what is missing and which
 machine should have produced it; exit 0 when the cache is complete.
 
-  python3 experiments/verify_cache.py --work ~/rev2_work
+  python3 experiments/verify_cache.py --work $WORK_DIR
   python3 experiments/verify_cache.py --cache-dir C --holdout H --train-files F...
 """
 import argparse

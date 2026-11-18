@@ -18,7 +18,7 @@ Usage:
 Pipeline versions (--pipeline-version, default v3):
     v2 -- the pre-revision behaviour, reproduced byte-for-byte so earlier
           results stay reproducible.
-    v3 -- leakage-audited revision (see PIPELINE_V3_CHANGES.md):
+    v3 -- leakage-audited revision (see docs/PIPELINE_V3_CHANGES.md):
           * flooding: the selected ORIGINAL row stays benign; only the
             appended duplicates are labelled flooding (same RNG draws as v2,
             so every other attack slice is identical to v2).
@@ -453,7 +453,7 @@ def add_tier_b_features(df: pd.DataFrame, region_baseline: pd.Series = None,
     # inter_arrival_s per region over the whole chunk. It uses no labels or
     # attack rows, but it does use every clean row of the chunk, i.e. rows
     # later in time than the row being scored (up to chunk length, 1-2 h).
-    # Kept unchanged in v3 and documented in PIPELINE_V3_CHANGES.md: a
+    # Kept unchanged in v3 and documented in docs/PIPELINE_V3_CHANGES.md: a
     # deployed detector can reproduce it with a trailing-window regional
     # mean, and it is a slowly varying regional context value.
 
@@ -905,7 +905,7 @@ if __name__ == "__main__":
                     default=DEFAULT_PIPELINE_VERSION,
                     help="v2 reproduces the pre-revision pipeline byte-for-byte; "
                          "v3 (default) applies the leakage-audit fixes described in "
-                         "PIPELINE_V3_CHANGES.md; mv writes the v3 file plus the extra "
+                         "docs/PIPELINE_V3_CHANGES.md; mv writes the v3 file plus the extra "
                          "columns needed to rebuild v2 and every single-correction mix "
                          "(see experiments/reprocess_mv.py for the resumable day driver).")
     args = p.parse_args()

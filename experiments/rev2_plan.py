@@ -142,7 +142,7 @@ def load_shard_keys(name):
 def apply_shard(step, J, e):
     """Set job['only'] to the set of run_ids assigned to this machine's shard
     (None = all), and drop jobs with nothing assigned. Step 4 (prepare-only,
-    needs the labelled files) is never sharded: it stays on the user's machine."""
+    needs the labelled files) is never sharded: it stays on the main machine."""
     keys = e.get("shard_keys")
     if keys is None or step == 4:
         for j in J:
