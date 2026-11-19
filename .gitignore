@@ -12,7 +12,7 @@ labeled*/
 !requirements*.csv
 
 # --- Experiment outputs written by the scripts' default paths ---
-results/
+results/*
 runs/
 models/
 audit_out/
@@ -20,6 +20,12 @@ rev_runs*/
 all_results/
 generated/
 *.zip
+
+# the aggregated results committed for the paper (see results/README.md)
+!results/README.md
+!results/make_runs_index.py
+!results/runs_index.csv
+!results/generated/
 
 # --- Live demo: prepared data, saved runs and models (rebuilt by demo/start_demo.sh) ---
 demo/data/

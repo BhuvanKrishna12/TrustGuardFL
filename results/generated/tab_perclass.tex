@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Per-Class Precision, Recall and F1 at Full Correction ($s=1$, Full Feature Set)}
+\label{tab:perclass}
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+& & \multicolumn{3}{c}{Fed.\ CNN} & \multicolumn{3}{c}{Central CNN} & \multicolumn{3}{c}{LightGBM} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}
+Class & Support & P & R & F1 & P & R & F1 & P & R & F1 \\
+\midrule
+Benign & 1{,}803{,}100 & 96.7{\,}$\pm${\,}0.1 & 98.3{\,}$\pm${\,}0.1 & 97.5{\,}$\pm${\,}0.1 & 97.9{\,}$\pm${\,}0.2 & 97.6{\,}$\pm${\,}0.2 & 97.7{\,}$\pm${\,}0.0 & 98.6{\,}$\pm${\,}0.0 & 97.2{\,}$\pm${\,}0.0 & 97.9{\,}$\pm${\,}0.0 \\
+Flooding & 234{,}379 & 99.7{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 99.8{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 100.0{\,}$\pm${\,}0.0 & 100.0{\,}$\pm${\,}0.0 & 100.0{\,}$\pm${\,}0.0 \\
+Ghost aircraft & 39{,}403 & 79.2{\,}$\pm${\,}0.1 & 99.9{\,}$\pm${\,}0.0 & 88.4{\,}$\pm${\,}0.0 & 79.5{\,}$\pm${\,}0.0 & 99.8{\,}$\pm${\,}0.3 & 88.5{\,}$\pm${\,}0.1 & 79.5{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 88.5{\,}$\pm${\,}0.0 \\
+GPS spoof & 39{,}208 & 49.3{\,}$\pm${\,}0.1 & 9.3{\,}$\pm${\,}1.1 & 15.7{\,}$\pm${\,}1.5 & 48.9{\,}$\pm${\,}0.2 & 39.9{\,}$\pm${\,}5.1 & 43.8{\,}$\pm${\,}2.9 & 49.5{\,}$\pm${\,}0.1 & 53.6{\,}$\pm${\,}0.5 & 51.4{\,}$\pm${\,}0.2 \\
+Replay & 39{,}074 & 52.3{\,}$\pm${\,}0.3 & 55.4{\,}$\pm${\,}1.0 & 53.8{\,}$\pm${\,}0.4 & 53.1{\,}$\pm${\,}1.0 & 65.1{\,}$\pm${\,}6.4 & 58.3{\,}$\pm${\,}2.2 & 54.4{\,}$\pm${\,}0.1 & 72.4{\,}$\pm${\,}0.6 & 62.1{\,}$\pm${\,}0.2 \\
+Velocity spoof & 39{,}011 & 83.4{\,}$\pm${\,}2.3 & 58.8{\,}$\pm${\,}4.2 & 68.9{\,}$\pm${\,}3.7 & 93.3{\,}$\pm${\,}2.0 & 77.7{\,}$\pm${\,}2.7 & 84.8{\,}$\pm${\,}1.4 & 96.8{\,}$\pm${\,}0.1 & 92.2{\,}$\pm${\,}0.1 & 94.5{\,}$\pm${\,}0.1 \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Support: held-out rows of the class.}
+\end{table*}

@@ -1,0 +1,29 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Baselines on the Corrected Pipeline (Full Feature Set)}
+\label{tab:baselines}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+Model & Parameters & Macro F1 at $s^{*}$ & Macro F1 at $s=1$ & FAR at $s^{*}$ & Atk.\ rec.\ at $s^{*}$ & PR-AUC \\
+\midrule
+LightGBM & -- & 83.4{\,}$\pm${\,}0.1 & 82.4{\,}$\pm${\,}0.0 & 3.6{\,}$\pm${\,}0.0 & 89.0{\,}$\pm${\,}0.1 & 81.3{\,}$\pm${\,}0.1 \\
+Central CNN & 11{,}334 & 80.9{\,}$\pm${\,}0.3 & 78.8{\,}$\pm${\,}0.7 & 3.7{\,}$\pm${\,}0.2 & 85.0{\,}$\pm${\,}0.9 & 78.7{\,}$\pm${\,}0.3 \\
+Fed.\ CNN (FedAvg) & 11{,}334 & 78.2{\,}$\pm${\,}0.3 & 70.7{\,}$\pm${\,}0.6 & 3.7{\,}$\pm${\,}0.2 & 80.4{\,}$\pm${\,}1.1 & 75.6{\,}$\pm${\,}0.6 \\
+Central MLP & 11{,}334 & 80.7{\,}$\pm${\,}0.2 & 78.5{\,}$\pm${\,}0.9 & 3.6{\,}$\pm${\,}0.1 & 84.0{\,}$\pm${\,}0.7 & 78.4{\,}$\pm${\,}0.4 \\
+Fed.\ MLP (FedAvg) & 11{,}334 & 75.2{\,}$\pm${\,}0.5 & 62.0{\,}$\pm${\,}2.9 & 5.3{\,}$\pm${\,}1.1 & 80.6{\,}$\pm${\,}4.1 & 71.3{\,}$\pm${\,}0.6 \\
+Fed.\ CNN (FedProx, $\mu=0.01$) & 11{,}334 & 77.2{\,}$\pm${\,}0.2 & 68.8{\,}$\pm${\,}0.2 & 3.6{\,}$\pm${\,}0.0 & 78.6{\,}$\pm${\,}0.4 & 74.5{\,}$\pm${\,}0.4 \\
+Fed.\ CNN (FedProx, $\mu=0.1$) & 11{,}334 & 75.4{\,}$\pm${\,}0.2 & 58.4{\,}$\pm${\,}0.2 & 5.7{\,}$\pm${\,}0.0 & 82.4{\,}$\pm${\,}0.5 & 71.1{\,}$\pm${\,}0.0 \\
+\midrule
+\emph{Fed.$-$central, CNN} & & $-2.6$ [$-2.9$, $-2.3$] & $-8.2$ [$-8.9$, $-7.4$] & $-0.1$ [$-0.3$, $+0.2$] & $-4.6$ [$-5.9$, $-3.3$] & $-3.1$ [$-3.6$, $-2.6$] \\
+\emph{Fed.$-$central, MLP} & & $-5.5$ [$-6.0$, $-5.0$] & $-16.5$ [$-20.4$, $-12.5$] & $+1.7$ [$+0.3$, $+3.1$] & $-3.4$ [$-8.7$, $+1.9$] & $-7.1$ [$-8.1$, $-6.2$] \\
+\emph{FedProx $\mu=0.01$ $-$ FedAvg} & & $-0.9$ [$-1.4$, $-0.5$] & $-1.6$ [$-2.9$, $-0.3$] & $-0.1$ [$-0.2$, $-0.0$] & $-2.1$ [$-3.2$, $-1.1$] & $-0.8$ [$-1.5$, $-0.0$] \\
+\emph{FedProx $\mu=0.1$ $-$ FedAvg} & & $-2.8$ [$-4.1$, $-1.4$] & $-12.0$ [$-13.5$, $-10.5$] & $+1.9$ [$+1.8$, $+2.0$] & $+1.6$ [$-1.4$, $+4.5$] & $-4.2$ [$-5.8$, $-2.5$] \\
+\emph{CNN$-$MLP, central} & & $+0.2$ [$-0.4$, $+0.7$] & $+0.3$ [$-1.1$, $+1.8$] & $+0.2$ [$-0.1$, $+0.5$] & $+1.0$ [$-0.4$, $+2.4$] & $+0.2$ [$-0.5$, $+0.9$] \\
+\emph{CNN$-$MLP, federated} & & $+3.0$ [$+2.7$, $+3.4$] & $+8.6$ [$+5.0$, $+12.3$] & $-1.6$ [$-2.8$, $-0.4$] & $-0.2$ [$-4.3$, $+3.8$] & $+4.2$ [$+2.9$, $+5.6$] \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over seeds, in \%. The MLP (13--190--44--6) has the same number of parameters as the CNN and is trained through the same centralized and FedAvg code paths. PR-AUC: macro average over the six classes of the one-vs-rest average precision. Lower block: paired differences per seed in percentage points, mean and 95\% $t$-interval over the seeds both runs share.}
+\end{table*}

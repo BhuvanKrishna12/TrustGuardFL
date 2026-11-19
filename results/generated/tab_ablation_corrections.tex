@@ -1,0 +1,37 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Pipeline Corrections One at a Time (Macro F1 at $s=1$, Full Feature Set)}
+\label{tab:ablationcorrections}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+& \multicolumn{2}{c}{LightGBM} & \multicolumn{2}{c}{Central CNN} & \multicolumn{2}{c}{Fed.\ CNN} & \multicolumn{2}{c}{Effect (own test)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Training data variant & own test & corr.\ test & own test & corr.\ test & own test & corr.\ test & LightGBM & Central CNN \\
+\midrule
+Corrected pipeline (all corrections) & 82.4{\,}$\pm${\,}0.0 & 82.4{\,}$\pm${\,}0.0 & 78.8{\,}$\pm${\,}0.7 & 78.8{\,}$\pm${\,}0.7 & 70.7{\,}$\pm${\,}0.6 & 70.7{\,}$\pm${\,}0.6 &  &  \\
+Earlier pipeline (none of C1, C2, C3, C5) & 94.4{\,}$\pm${\,}0.0 & 80.4{\,}$\pm${\,}0.0 & 92.3{\,}$\pm${\,}0.2 & 78.2{\,}$\pm${\,}0.3 & 88.7{\,}$\pm${\,}0.6 & 73.3{\,}$\pm${\,}0.4 & $-12.0$ [$-12.0$, $-11.9$] & $-13.5$ [$-14.4$, $-12.6$] \\
+\midrule
+\multicolumn{9}{l}{\emph{Leave one out: all corrected except the named correction}} \\
+\quad without C1 (causal message count) & 85.2{\,}$\pm${\,}0.1 & 79.5{\,}$\pm${\,}0.1 & 81.8{\,}$\pm${\,}0.3 & 75.3{\,}$\pm${\,}1.2 & 73.0{\,}$\pm${\,}0.3 & 67.9{\,}$\pm${\,}0.6 & $-2.8$ [$-2.8$, $-2.7$] & $-3.1$ [$-4.1$, $-2.0$] \\
+\quad without C2 (squawk change needs both codes) & 83.0{\,}$\pm${\,}0.0 & 82.0{\,}$\pm${\,}0.1 & 79.4{\,}$\pm${\,}0.8 & 78.5{\,}$\pm${\,}0.6 & 71.7{\,}$\pm${\,}0.3 & 70.8{\,}$\pm${\,}0.4 & $-0.6$ [$-0.7$, $-0.6$] & $-0.6$ [$-1.8$, $+0.6$] \\
+\quad without C3 (no benign-only speed filter) & 92.8{\,}$\pm${\,}0.0 & 81.6{\,}$\pm${\,}0.0 & 90.8{\,}$\pm${\,}0.1 & 79.6{\,}$\pm${\,}0.0 & 86.8{\,}$\pm${\,}0.5 & 76.0{\,}$\pm${\,}0.5 & $-10.4$ [$-10.5$, $-10.3$] & $-12.0$ [$-13.5$, $-10.5$] \\
+\quad without C5 (flooding originals benign) & 81.0{\,}$\pm${\,}0.0 & 82.5{\,}$\pm${\,}0.0 & 77.7{\,}$\pm${\,}0.8 & 79.1{\,}$\pm${\,}0.8 & 70.0{\,}$\pm${\,}0.1 & 71.4{\,}$\pm${\,}0.1 & $+1.4$ [$+1.3$, $+1.4$] & $+1.1$ [$-2.1$, $+4.3$] \\
+\midrule
+\multicolumn{9}{l}{\emph{Add one: earlier pipeline plus the named correction}} \\
+\quad only C1 (causal message count) & 91.5{\,}$\pm${\,}0.0 & 81.5{\,}$\pm${\,}0.0 & 89.5{\,}$\pm${\,}0.2 & 79.4{\,}$\pm${\,}0.1 & -- & -- & $-2.8$ [$-2.9$, $-2.8$] & $-2.9$ [$-3.1$, $-2.6$] \\
+\quad only C2 (squawk change needs both codes) & 93.5{\,}$\pm${\,}0.0 & 80.6{\,}$\pm${\,}0.1 & 91.4{\,}$\pm${\,}0.2 & 77.5{\,}$\pm${\,}0.4 & -- & -- & $-0.9$ [$-0.9$, $-0.8$] & $-1.0$ [$-1.3$, $-0.7$] \\
+\quad only C3 (no benign-only speed filter) & 84.5{\,}$\pm${\,}0.0 & 79.7{\,}$\pm${\,}0.1 & 81.3{\,}$\pm${\,}0.3 & 74.9{\,}$\pm${\,}0.6 & -- & -- & $-9.9$ [$-9.9$, $-9.8$] & $-11.1$ [$-11.5$, $-10.7$] \\
+\quad only C5 (flooding originals benign) & 96.2{\,}$\pm${\,}0.0 & 80.3{\,}$\pm${\,}0.0 & 94.2{\,}$\pm${\,}0.1 & 77.6{\,}$\pm${\,}0.3 & -- & -- & $+1.8$ [$+1.8$, $+1.9$] & $+1.9$ [$+1.6$, $+2.2$] \\
+\midrule
+\multicolumn{9}{l}{\emph{Sampler S: legacy loader instead of the uniform capped sampler}} \\
+\quad corrected pipeline, legacy loader & 81.9{\,}$\pm${\,}0.0 & 81.9{\,}$\pm${\,}0.0 & 79.2{\,}$\pm${\,}0.0 & 79.2{\,}$\pm${\,}0.0 & -- & -- & $+0.5$ [$+0.4$, $+0.6$] & $-0.4$ [$-1.8$, $+0.9$] \\
+\quad earlier pipeline, legacy loader & 94.0{\,}$\pm${\,}0.1 & 80.3{\,}$\pm${\,}0.0 & 92.4{\,}$\pm${\,}0.1 & 78.0{\,}$\pm${\,}0.1 & -- & -- & $+0.3$ [$+0.3$, $+0.4$] & $-0.0$ [$-0.5$, $+0.4$] \\
+\midrule
+Pre-floor (reconstructed; extra) & 94.4{\,}$\pm${\,}0.0 & 80.3{\,}$\pm${\,}0.2 & 91.9{\,}$\pm${\,}0.3 & 57.0{\,}$\pm${\,}0.4 & -- & -- & $+0.0$ [$-0.0$, $+0.0$] & $+0.4$ [$-0.5$, $+1.4$] \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over seeds, in \%. Own test: the test sample built like the training data of that row; corr.\ test: the fully corrected test sample (same sampled rows; rows removed by the earlier filter exist only there). Effect: paired difference per seed in percentage points, each side on its own test sample, mean and 95\% $t$-interval; for the earlier pipeline row: corrected minus earlier; leave-one-out rows: corrected minus row (what the correction contributes last); add-one rows: row minus earlier pipeline (what it contributes first); sampler rows: uniform minus legacy loader; pre-floor row: earlier pipeline minus pre-floor. The federated CNN was run for the corrected, earlier and leave-one-out rows only. \emph{Pre-floor}: the earlier pipeline without the 0.1\,s rate-denominator floor, reconstructed from the documented rule (rate features missing when the gap is below 1\,s), not from the original code.}
+\end{table*}

@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Correction Strength Selected on Validation Data}
+\label{tab:selecteds}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrrrr}
+\toprule
+& & & Val.\ F1 & \multicolumn{4}{c}{Test macro F1 at} & Test-opt. \\
+\cmidrule(lr){5-8}
+Features & Model & $s^{*}$ (per seed) & at $s^{*}$ & $s^{*}$ & $s=0$ & $s=0.5$ & $s=1$ & $s$ \\
+\midrule
+Full & LightGBM & 0.80 (0.8, 0.8, 0.8, 0.8, 0.8) & 83.5{\,}$\pm${\,}0.1 & 83.4{\,}$\pm${\,}0.1 & 77.6{\,}$\pm${\,}0.1 & 82.2{\,}$\pm${\,}0.1 & 82.4{\,}$\pm${\,}0.0 & 0.80 \\
+ & Central CNN & 0.74 (0.8, 0.7, 0.7, 0.8, 0.7) & 80.5{\,}$\pm${\,}0.4 & 80.9{\,}$\pm${\,}0.3 & 74.6{\,}$\pm${\,}1.1 & 79.7{\,}$\pm${\,}0.5 & 78.8{\,}$\pm${\,}0.7 & 0.74 \\
+ & Fed.\ CNN & 0.72 (0.7, 0.7, 0.7, 0.8, 0.7) & 76.8{\,}$\pm${\,}0.2 & 78.2{\,}$\pm${\,}0.3 & 73.8{\,}$\pm${\,}0.3 & 78.0{\,}$\pm${\,}0.3 & 70.7{\,}$\pm${\,}0.6 & 0.68 \\
+\midrule
+Core & LightGBM & 0.80 (0.8, 0.8, 0.8, 0.8, 0.8) & 83.2{\,}$\pm${\,}0.0 & 82.9{\,}$\pm${\,}0.0 & 72.1{\,}$\pm${\,}0.1 & 81.8{\,}$\pm${\,}0.1 & 81.8{\,}$\pm${\,}0.0 & 0.80 \\
+ & Central CNN & 0.72 (0.7, 0.7, 0.7, 0.8, 0.7) & 79.2{\,}$\pm${\,}0.6 & 79.9{\,}$\pm${\,}0.4 & 74.9{\,}$\pm${\,}1.4 & 79.3{\,}$\pm${\,}0.5 & 76.6{\,}$\pm${\,}1.4 & 0.72 \\
+ & Fed.\ CNN & 0.80 (0.8, 0.8, 0.8, 0.8, 0.8) & 75.5{\,}$\pm${\,}0.3 & 77.3{\,}$\pm${\,}0.5 & 73.7{\,}$\pm${\,}0.3 & 77.0{\,}$\pm${\,}0.6 & 74.2{\,}$\pm${\,}0.3 & 0.70 \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize $s^{*}$: the strength in $\{0,0.1,\dots,1\}$ with the highest macro F1 on the validation rows (aircraft disjoint from the training rows) reweighted to the natural class prior of the training days; ties go to the smaller $s$; fixed for each run before the test sample is scored. Mean $\pm$ standard deviation over seeds, in \%. Test-opt.\ $s$: the strength that would have been best on the test sample, mean over seeds, shown as an observation only.}
+\end{table*}
