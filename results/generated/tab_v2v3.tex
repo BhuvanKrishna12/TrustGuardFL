@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Old (v2) versus Corrected (v3) Pipeline (Full Feature Set)}
+\label{tab:v2v3}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllrrrrr}
+\toprule
+Model & $s$ & Data & Macro F1 & FAR & Atk.\ rec. & Flooding rec. & Ghost rec. \\
+\midrule
+LightGBM & 0 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & 77.6{\,}$\pm${\,}0.1 & 9.3{\,}$\pm${\,}0.1 & 95.0{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 & 100.0{\,}$\pm${\,}0.0 \\
+ & 1 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & 82.4{\,}$\pm${\,}0.0 & 2.8{\,}$\pm${\,}0.0 & 83.6{\,}$\pm${\,}0.1 & 100.0{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 \\
+\midrule
+Fed.\ CNN & 0 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & 73.8{\,}$\pm${\,}0.3 & 8.2{\,}$\pm${\,}0.2 & 89.0{\,}$\pm${\,}0.1 & 99.8{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 \\
+ & 1 & v2 & -- & -- & -- & -- & -- \\
+ &  & v3 & 70.7{\,}$\pm${\,}0.6 & 1.7{\,}$\pm${\,}0.1 & 64.7{\,}$\pm${\,}0.8 & 99.9{\,}$\pm${\,}0.0 & 99.9{\,}$\pm${\,}0.0 \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over seeds, in \%. v2: the earlier labelled files and test sample; v3: the corrected pipeline. Each version is evaluated on its own test sample, drawn the same way.}
+\end{table*}

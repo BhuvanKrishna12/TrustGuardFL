@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Earlier versus Corrected Pipeline under One Protocol (Full Feature Set)}
+\label{tab:unifiedpipeline}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrr}
+\toprule
+Model & Pipeline & Macro F1, own test & Macro F1, corr.\ test & Macro F1 at $s^{*}$ & FAR & Atk.\ rec. \\
+\midrule
+LightGBM & earlier & 94.4{\,}$\pm${\,}0.0 & 80.4{\,}$\pm${\,}0.0 & 94.3{\,}$\pm${\,}0.0 & 0.2{\,}$\pm${\,}0.0 & 91.2{\,}$\pm${\,}0.0 \\
+ & corrected & 82.4{\,}$\pm${\,}0.0 & 82.4{\,}$\pm${\,}0.0 & 83.4{\,}$\pm${\,}0.1 & 2.8{\,}$\pm${\,}0.0 & 83.6{\,}$\pm${\,}0.1 \\
+ & \emph{corr.$-$earlier} & $-12.0$ [$-12.0$, $-11.9$] & $+2.0$ [$+1.9$, $+2.0$] & & & \\
+\midrule
+Central CNN & earlier & 92.3{\,}$\pm${\,}0.2 & 78.2{\,}$\pm${\,}0.3 & 92.3{\,}$\pm${\,}0.1 & 0.2{\,}$\pm${\,}0.0 & 87.5{\,}$\pm${\,}0.3 \\
+ & corrected & 78.8{\,}$\pm${\,}0.7 & 78.8{\,}$\pm${\,}0.7 & 80.9{\,}$\pm${\,}0.3 & 2.4{\,}$\pm${\,}0.2 & 76.5{\,}$\pm${\,}1.8 \\
+ & \emph{corr.$-$earlier} & $-13.5$ [$-14.4$, $-12.6$] & $+0.6$ [$-0.0$, $+1.2$] & & & \\
+\midrule
+Fed.\ CNN & earlier & 88.7{\,}$\pm${\,}0.6 & 73.3{\,}$\pm${\,}0.4 & 88.9{\,}$\pm${\,}0.4 & 0.4{\,}$\pm${\,}0.1 & 82.9{\,}$\pm${\,}0.9 \\
+ & corrected & 70.7{\,}$\pm${\,}0.6 & 70.7{\,}$\pm${\,}0.6 & 78.2{\,}$\pm${\,}0.3 & 1.7{\,}$\pm${\,}0.1 & 64.7{\,}$\pm${\,}0.8 \\
+ & \emph{corr.$-$earlier} & $-18.0$ [$-18.7$, $-17.4$] & $-2.7$ [$-3.1$, $-2.2$] & & & \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over seeds, in \%; $s=1$ unless stated. Both pipelines come from one multi-variant reprocessing of the same raw data, the same sampler, the same protocol (aircraft-disjoint validation, statistics fitted on training rows) and the same hash-selected test rows. Own test: each pipeline scored on its own version of the test sample. corr.$-$earlier: paired difference per seed in percentage points with 95\% $t$-interval.}
+\end{table*}

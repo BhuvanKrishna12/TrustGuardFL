@@ -1,0 +1,10 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\columnwidth,height=4.2cm,ymode=log,xlabel={Client rank},ylabel={Rows per client},grid=both,tick label style={font=\scriptsize},label style={font=\scriptsize}]
+\addplot[ycomb,blue,thick] table[x=rank,y=rows] {generated/clientsizes.dat};
+\end{axis}
+\end{tikzpicture}
+\caption{Rows per client (training plus validation) in the capped sample, sorted in decreasing order.}
+\label{fig:clients}
+\end{figure}

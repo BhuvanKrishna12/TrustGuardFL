@@ -1,0 +1,32 @@
+\begin{table*}[t]
+\centering
+\scriptsize
+\caption{Federated versus Centralized Training on Identical Rows}
+\label{tab:fedcentral}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lllrrrrr}
+\toprule
+Features & Model & $s$ & Accuracy & FAR & Missed attacks & Attack recall & Macro F1 \\
+\midrule
+Full & Fed.\ CNN & 0 & 92.2{\,}$\pm${\,}0.1 & 8.2{\,}$\pm${\,}0.2 & 2.5{\,}$\pm${\,}0.0 & 89.0{\,}$\pm${\,}0.1 & 73.8{\,}$\pm${\,}0.3 \\
+ &  & 1 & 95.4{\,}$\pm${\,}0.1 & 1.7{\,}$\pm${\,}0.1 & 15.6{\,}$\pm${\,}0.4 & 64.7{\,}$\pm${\,}0.8 & 70.7{\,}$\pm${\,}0.6 \\
+ & Central CNN & 0 & 91.8{\,}$\pm${\,}0.6 & 9.2{\,}$\pm${\,}0.8 & 1.3{\,}$\pm${\,}0.2 & 92.8{\,}$\pm${\,}0.4 & 74.6{\,}$\pm${\,}1.1 \\
+ &  & 1 & 95.9{\,}$\pm${\,}0.0 & 2.4{\,}$\pm${\,}0.2 & 9.9{\,}$\pm${\,}0.9 & 76.5{\,}$\pm${\,}1.8 & 78.8{\,}$\pm${\,}0.7 \\
+ & LightGBM & 0 & 91.9{\,}$\pm${\,}0.1 & 9.3{\,}$\pm${\,}0.1 & 0.5{\,}$\pm${\,}0.0 & 95.0{\,}$\pm${\,}0.0 & 77.6{\,}$\pm${\,}0.1 \\
+ &  & 1 & 96.3{\,}$\pm${\,}0.0 & 2.8{\,}$\pm${\,}0.0 & 6.4{\,}$\pm${\,}0.1 & 83.6{\,}$\pm${\,}0.1 & 82.4{\,}$\pm${\,}0.0 \\
+ & \emph{Fed.$-$central} & 0 & & $-1.0$ $[-1.9, -0.1]$ & & $-3.8$ $[-4.3, -3.3]$ & $-0.8$ $[-2.0, 0.3]$ \\
+ & \emph{Fed.$-$central} & 1 & & $-0.7$ $[-0.9, -0.6]$ & & $-11.8$ $[-13.7, -10.0]$ & $-8.2$ $[-8.9, -7.4]$ \\
+\midrule
+Core & Fed.\ CNN & 0 & 92.6{\,}$\pm${\,}0.1 & 7.2{\,}$\pm${\,}0.1 & 3.0{\,}$\pm${\,}0.1 & 87.2{\,}$\pm${\,}0.4 & 73.7{\,}$\pm${\,}0.3 \\
+ &  & 1 & 95.2{\,}$\pm${\,}0.2 & 2.5{\,}$\pm${\,}0.1 & 13.3{\,}$\pm${\,}0.4 & 69.8{\,}$\pm${\,}0.6 & 74.2{\,}$\pm${\,}0.3 \\
+ & Central CNN & 0 & 92.1{\,}$\pm${\,}0.7 & 8.7{\,}$\pm${\,}0.9 & 1.8{\,}$\pm${\,}0.1 & 91.6{\,}$\pm${\,}0.5 & 74.9{\,}$\pm${\,}1.4 \\
+ &  & 1 & 95.7{\,}$\pm${\,}0.1 & 2.2{\,}$\pm${\,}0.3 & 12.0{\,}$\pm${\,}1.5 & 72.1{\,}$\pm${\,}2.9 & 76.6{\,}$\pm${\,}1.4 \\
+ & LightGBM & 0 & 89.5{\,}$\pm${\,}0.0 & 12.2{\,}$\pm${\,}0.1 & 0.6{\,}$\pm${\,}0.0 & 94.7{\,}$\pm${\,}0.0 & 72.1{\,}$\pm${\,}0.1 \\
+ &  & 1 & 96.2{\,}$\pm${\,}0.0 & 2.7{\,}$\pm${\,}0.0 & 7.1{\,}$\pm${\,}0.1 & 82.3{\,}$\pm${\,}0.1 & 81.8{\,}$\pm${\,}0.0 \\
+ & \emph{Fed.$-$central} & 0 & & $-1.5$ $[-2.6, -0.3]$ & & $-4.3$ $[-4.6, -4.0]$ & $-1.2$ $[-2.9, 0.5]$ \\
+ & \emph{Fed.$-$central} & 1 & & 0.3 $[-0.1, 0.7]$ & & $-2.3$ $[-6.2, 1.6]$ & $-2.4$ $[-4.2, -0.5]$ \\
+\bottomrule
+\end{tabular}
+\\[2pt]
+\parbox{\linewidth}{\scriptsize Mean $\pm$ standard deviation over \R{nseeds} seeds, in \%. Fed.\ CNN and Central CNN share architecture, scaler, class weights, optimizer, training rows and validation rows; only the training procedure differs. Fed.$-$central: paired difference per seed in percentage points, mean and 95\% $t$-interval over seeds. Missed attacks: attack rows predicted benign over attack rows.}
+\end{table*}

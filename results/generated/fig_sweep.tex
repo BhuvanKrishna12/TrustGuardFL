@@ -1,0 +1,58 @@
+\begin{figure*}[t]
+\centering
+\pgfplotsset{sweepax/.style={scale only axis,width=0.24\textwidth,height=2.6cm,xmin=-0.05,xmax=1.05,xtick={0,0.25,0.5,0.75,1},grid=both,tick label style={font=\scriptsize},label style={font=\scriptsize},title style={font=\scriptsize,yshift=-4pt}}}
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={False alarm rate (\%)},title={Full feature set},legend to name=sweeplegend,legend columns=3,legend style={font=\scriptsize,draw=none,/tikz/every even column/.append style={column sep=6pt}}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_fedcnn_full.dat};
+\addlegendentry{Fed.\ CNN}
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_centralcnn_full.dat};
+\addlegendentry{Central CNN}
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_lgbm_full.dat};
+\addlegendentry{LightGBM}
+\end{axis}
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={Avg.\ attack recall (\%)},title={Full feature set}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_fedcnn_full.dat};
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_centralcnn_full.dat};
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_lgbm_full.dat};
+\end{axis}
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={Macro F1 (\%)},title={Full feature set}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_fedcnn_full.dat};
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_centralcnn_full.dat};
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_lgbm_full.dat};
+\end{axis}
+\end{tikzpicture}
+\\[2pt]
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={False alarm rate (\%)},title={Core feature set},xlabel={Correction strength $s$}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_fedcnn_core.dat};
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_centralcnn_core.dat};
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=far,y error=far_sd] {generated/sweep_lgbm_core.dat};
+\end{axis}
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={Avg.\ attack recall (\%)},title={Core feature set},xlabel={Correction strength $s$}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_fedcnn_core.dat};
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_centralcnn_core.dat};
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=atkrecall,y error=atkrecall_sd] {generated/sweep_lgbm_core.dat};
+\end{axis}
+\end{tikzpicture}
+\hfill
+\begin{tikzpicture}[baseline]
+\begin{axis}[sweepax,ylabel={Macro F1 (\%)},title={Core feature set},xlabel={Correction strength $s$}]
+\addplot[blue,mark=o,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_fedcnn_core.dat};
+\addplot[red,mark=square*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_centralcnn_core.dat};
+\addplot[black!70!green,mark=triangle*,thick,mark size=1.3pt,error bars/.cd,y dir=both,y explicit] table[x=s,y=macrof1,y error=macrof1_sd] {generated/sweep_lgbm_core.dat};
+\end{axis}
+\end{tikzpicture}
+\\[2pt]
+\ref{sweeplegend}
+\caption{False alarm rate, average attack recall and macro F1 against the class-prior correction strength $s$ (pooled held-out days). Top: full feature set; bottom: core feature set. Error bars: standard deviation over seeds.}
+\label{fig:sweep}
+\end{figure*}
