@@ -12,13 +12,11 @@ labeled*/
 !requirements*.csv
 
 # --- Experiment outputs written by the scripts' default paths ---
-results/
 runs/
 models/
 audit_out/
 rev_runs*/
 all_results/
-generated/
 *.zip
 
 # --- Live demo: prepared data, saved runs and models (rebuilt by demo/start_demo.sh) ---

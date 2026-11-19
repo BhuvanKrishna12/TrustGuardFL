@@ -42,7 +42,6 @@ results characterize detection of the specified injection rules, not of real adv
 | `docs/` | Reproduction guide, multi-machine guide, pipeline overview, v3 changes and audit, screenshots |
 | `demo/` | Live browser demo of a trained model (not part of the paper's evaluation) |
 | `tools/` | Earlier exploratory prior-correction scripts and one-off flooding diagnostics |
-| `CITATION.cff` | Citation metadata |
 | `LICENSE` | MIT license |
 
 ## Requirements and installation
@@ -157,4 +156,4 @@ MIT, see [LICENSE](LICENSE).
 
 ## How to cite
 
-Please cite the paper; citation metadata is in [CITATION.cff](CITATION.cff).
+If you use this code, please cite the paper it accompanies: "AeroGuard: Federated Intrusion Detection for ADS-B Surveillance with a Synthetic-Attack Leakage Audit and Class-Prior Correction". Full reference details will be added once the paper is published.
