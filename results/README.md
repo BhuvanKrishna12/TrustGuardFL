@@ -91,7 +91,7 @@ One row per run, 161 rows, sorted by step and then by source file. Columns:
 | `macro_f1_at_s_star`, `far_at_s_star`, `attack_recall_at_s_star` | Test metrics at `s_star`, as fractions, not percentages |
 | `pr_auc` | Macro one-vs-rest average precision on the test sample; it does not depend on `s` |
 | `macro_f1_at_s1`, `far_at_s1`, `attack_recall_at_s1` | The same three metrics at full correction, `s=1` |
-| `n_clients`, `rounds_completed`, `rounds_cap` | Federated runs only: 161 clients, 50 of 50 FedAvg rounds in every run here |
+| `n_clients`, `rounds_completed`, `rounds_cap` | Federated runs only: 161 clients, and 50 of 50 FedAvg rounds completed in every run here. Which round is selected as the best one is a separate matter; see the caveats below |
 | `device` | Device recorded by the run, `cuda` or `cpu` |
 | `wall_clock_minutes` | `wall_seconds` of the run divided by 60, to one decimal place |
 | `source_file` | Path of the run JSON inside the merged runs tree |
@@ -121,8 +121,9 @@ The runs were produced on three machines: an RTX 3050 laptop, an RTX 4060 laptop
 CPU-only machine. The main-grid central CNN runs used a GPU, while the central CNN
 ablation variants (leave-one-out, add-one, legacy, legacy loader and pre-floor) ran on
 CPU; the federated CNN runs all used a GPU. The `device` column of the index says which
-device each run recorded. The library versions were the same on all three machines (torch
-2.14.1, LightGBM 4.7.0). Results on different consumer GPUs can differ slightly per seed,
+device each run recorded. The same package versions were pinned on all three machines
+(torch 2.14.1, LightGBM 4.7.0), with the CPU-only machine installing the CPU build of
+torch rather than the CUDA build. Results on different consumer GPUs can differ slightly per seed,
 so an exact re-run on other hardware should be expected to reproduce the reported means and
 intervals, not every digit of a single seed.
 
@@ -159,14 +160,12 @@ intervals, not every digit of a single seed.
 
 ## Raw per-run JSON files
 
-The 232 raw files (161 run JSONs plus 71 client inventories) total about 75 MB and are not
-in this repository. They are archived instead:
-
-```
-Zenodo DOI: [PLACEHOLDER: to be filled in once the archive is published]
-```
-
-That line is a placeholder and not yet a resolvable DOI.
+The 232 raw files (161 run JSONs plus 71 client inventories) total about 75 MB, most of
+which is the full correction-strength grid for every class. They are not in this
+repository, and they are not needed to check any number in the paper: `generated/` and
+`runs_index.csv` cover all of them. They are available from the authors on request, and
+will be deposited in a public archive with a persistent identifier once the accompanying
+paper is published.
 
 Each run JSON holds, for one run:
 
