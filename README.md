@@ -3,12 +3,8 @@
 Federated intrusion detection for ADS-B surveillance data, with a leakage audit of the
 synthetic-attack pipeline and a class-prior correction.
 
-Code accompanying the paper **"AeroGuard: Federated Intrusion Detection for ADS-B
-Surveillance with a Synthetic-Attack Leakage Audit and Class-Prior Correction"**.
-
-Status: code accompanying a manuscript under review.
-
-Formerly published under the name TrustGuardFL / FL-IDS.
+Code accompanying a manuscript currently under review. The paper's title and full
+reference will be added once it is published.
 
 ## What it does
 
@@ -42,6 +38,7 @@ results characterize detection of the specified injection rules, not of real adv
 | `docs/` | Reproduction guide, multi-machine guide, pipeline overview, v3 changes and audit, screenshots |
 | `demo/` | Live browser demo of a trained model (not part of the paper's evaluation) |
 | `tools/` | Earlier exploratory prior-correction scripts and one-off flooding diagnostics |
+| `results/` | The aggregated tables, sweep data and per-run index behind every table and figure in the paper (see [results/README.md](results/README.md)) |
 | `LICENSE` | MIT license |
 
 ## Requirements and installation
@@ -101,6 +98,24 @@ large-scale ADS-B sensor network for research", IPSN 2014.
 
    Each run writes a JSON with validation and test metrics for every correction strength.
 
+## Results in this repository
+
+`results/` holds the aggregated outputs behind every table and figure in the paper, so a
+number can be checked without re-running the grid:
+
+- `results/generated/` is the output of `experiments/aggregate_results.py`: the LaTeX tables
+  and the `.dat` sweep files plotted in the correction-strength figure.
+- `results/runs_index.csv` has one row per run, with the validation-chosen correction
+  strength, macro F1, false alarm rate, attack recall and PR-AUC at that strength and at
+  full correction, the rounds completed against the cap, and the device used.
+- `results/make_runs_index.py` rebuilds that index from the raw run JSONs.
+
+`results/README.md` maps each file to the table or figure it feeds and records the caveats
+needed to read the numbers correctly: the runs were produced on three machines, seed counts
+differ between models, and most federated runs finished at the round cap. The raw per-run
+JSON files are not in this repository because of their size; see `results/README.md` for
+where they are archived.
+
 ## Reproducing the paper
 
 The full procedure (data, pipeline, leakage audit, experiments, tables, expected time and
@@ -156,4 +171,4 @@ MIT, see [LICENSE](LICENSE).
 
 ## How to cite
 
-If you use this code, please cite the paper it accompanies: "AeroGuard: Federated Intrusion Detection for ADS-B Surveillance with a Synthetic-Attack Leakage Audit and Class-Prior Correction". Full reference details will be added once the paper is published.
+Reference details will be added once the accompanying paper is published.
